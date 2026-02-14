@@ -24,6 +24,7 @@
     --radius: 8px;
     --font: 'SF Mono', 'Fira Code', 'Consolas', monospace;
     --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 20px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -694,7 +695,7 @@
           <div class="radio-btn" onclick="setRosMode('full')" id="ros-mode-full">Full 14-system</div>
         </div>
       </div>
-      <div id="ros-focused-note" style="font-size:12px;color:var(--text2);line-height:1.5;">
+      <div id="ros-focused-note" style="font-size:16px;color:var(--text2);line-height:1.5;">
         Output: "A focused review of systems was performed and is negative except as noted in the HPI."
       </div>
     </div>
@@ -1228,7 +1229,7 @@ function buildSystemBody(sysKey) {
   const body = document.getElementById('body-' + sysKey);
   if (!body) return;
   const sys = ROS_SYSTEMS[sysKey];
-  let html = '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Tap finding to cycle: neutral → does not complain of → complains of/admits to</div>';
+  let html = '<div style="font-size:16px;color:var(--text3);margin-bottom:8px;">Tap finding to cycle: neutral → does not complain of → complains of/admits to</div>';
   sys.findings.forEach(f => {
     html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">
       <div class="finding-status" id="status-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">–</div>
@@ -1436,7 +1437,7 @@ function buildChestPainModule(container) {
       <span class="chevron" style="transform:rotate(180deg)">▼</span>
     </div>
     <div class="section-body open">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap any finding to mark as ABNORMAL (shown in orange). Edit specific values in the generated output.</div>`;
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap any finding to mark as ABNORMAL (shown in orange). Edit specific values in the generated output.</div>`;
 
   sectionDefs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
@@ -1455,7 +1456,7 @@ function buildChestPainModule(container) {
   // Synthesis block
   html += `<div id="synthesis-chest" style="display:none;" class="section">
     <div class="section-header">
-      <div class="section-title" style="font-size:12px;color:var(--text2);">Red Flag Synthesis (auto-generated on output)</div>
+      <div class="section-title" style="font-size:16px;color:var(--text2);">Red Flag Synthesis (auto-generated on output)</div>
     </div>
   </div>`;
 
@@ -1508,7 +1509,7 @@ function buildSOBModule(container) {
       <span class="chevron" style="transform:rotate(180deg)">▼</span>
     </div>
     <div class="section-body open">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
 
   const secs = [
     {key:'general',title:'General / Work of Breathing'},
@@ -1587,7 +1588,7 @@ function buildAbdoPainModule(container) {
       <span class="chevron" style="transform:rotate(180deg)">▼</span>
     </div>
     <div class="section-body open">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
 
   const secs = [
     {key:'inspection',title:'Inspection'},
@@ -1678,7 +1679,7 @@ function buildBackPainModule(container) {
       <span class="chevron" style="transform:rotate(180deg)">▼</span>
     </div>
     <div class="section-body open">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
 
   const secs = [
     {key:'general',title:'General / Gait'},
@@ -1771,24 +1772,10 @@ function generateOutput() {
   output += '\nPHYSICAL EXAMINATION\n';
   output += '-'.repeat(40) + '\n';
 
-  // Basic scaffold
   const age = document.getElementById('pt-age').value;
   const sex = document.getElementById('pt-sex').value;
   const build = document.getElementById('pt-build').value;
   const appear = document.getElementById('pt-appear').value;
-
-  output += `General: Patient is a ${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.\n`;
-  output += 'Head: Normocephalic, atraumatic. No visible injuries or deformities.\n';
-  output += 'Eyes: Open and symmetrical, no periorbital swelling or visible discharge. Pupils appear equal and reactive to light. No obvious scleral icterus or conjunctival injection.\n';
-  output += 'Ears: External ears normal in appearance, no discharge or visible lesions. Patient responds to verbal stimuli without difficulty.\n';
-  output += 'Nose: Midline, no visible deformity or bleeding.\n';
-  output += 'Neck: Trachea appears midline, no visible swelling or masses.\n';
-  output += 'Respiratory: No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.\n';
-  output += 'Cardiac: No visible pulsations or signs of distress. Skin color normal, no cyanosis or pallor.\n';
-  output += 'Extremities: Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.\n';
-  output += 'Neurological: Patient converses appropriately, follows commands. No obvious motor deficits or facial asymmetry observed.\n';
-  output += 'Skin: Intact, appropriate in colour, no visible rash, wounds, or lesions.\n';
-  output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
 
   // Vitals
   const hr = document.getElementById('v-hr').value;
@@ -1799,38 +1786,155 @@ function generateOutput() {
   const o2 = document.getElementById('v-o2').value;
 
   if (hr || bp || rr || temp || spo2) {
-    output += '\nVitals reviewed: ';
     const vparts = [];
     if (hr) vparts.push('HR ' + hr);
     if (bp) vparts.push('BP ' + bp);
     if (rr) vparts.push('RR ' + rr);
     if (temp) vparts.push('Temp ' + temp + ' degrees C');
     if (spo2) vparts.push('SpO2 ' + spo2 + '% on ' + o2);
-    output += vparts.join(', ') + '.\n';
+    output += 'Vitals: ' + vparts.join(', ') + '.\n';
   }
 
-  // Complaint module
-  const complaint = document.getElementById('complaint-select').value;
-  if (complaint !== 'none' && window.examData && window.examData[complaint]) {
-    output += '\nFOCUSED EXAMINATION: ' + getComplaintLabel(complaint).toUpperCase() + '\n';
-    const moduleData = window.examData[complaint];
-    Object.entries(moduleData).forEach(([section, findings]) => {
-      const abnormal = findings.filter(f => examFindings[f.id]);
-      const normal = findings.filter(f => !examFindings[f.id]);
-      if (abnormal.length === 0 && normal.length === 0) return;
-      const sectionLabel = formatSectionLabel(section);
-      let sectionText = sectionLabel + ': ';
-      if (abnormal.length > 0) {
-        sectionText += abnormal.map(f => f.abnormal).join('. ') + '. ';
-      }
-      const normalTexts = normal.map(f => f.normal);
-      if (normalTexts.length > 0) {
-        // For conciseness, bundle normal into a sentence
-        sectionText += normalTexts.join('. ') + '.';
-      }
-      output += sectionText + '\n';
-    });
+  // Helper: render a complaint module section into text
+  function renderModuleSection(findings) {
+    const abnormal = findings.filter(f => examFindings[f.id]);
+    const normal = findings.filter(f => !examFindings[f.id]);
+    let text = '';
+    if (abnormal.length > 0) text += abnormal.map(f => f.abnormal).join('. ') + '. ';
+    if (normal.length > 0) text += normal.map(f => f.normal).join('. ') + '.';
+    return text.trim();
   }
+
+  // Helper: check if module has any data for a given section key
+  const complaint = document.getElementById('complaint-select').value;
+  const moduleData = (complaint !== 'none' && window.examData && window.examData[complaint])
+    ? window.examData[complaint] : null;
+
+  function moduleSection(key) {
+    if (!moduleData || !moduleData[key]) return null;
+    return renderModuleSection(moduleData[key]);
+  }
+
+  // Map of module section keys that cover each scaffold system.
+  // Order matters: first match wins for the primary label.
+  // Multiple keys can contribute to the same output system.
+
+  // GENERAL
+  output += 'General: ' + (
+    moduleSection('general') ||
+    `Patient is a ${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
+  ) + '\n';
+
+  // HEAD (no module section covers this - always scaffold)
+  output += 'Head: Normocephalic, atraumatic. No visible injuries or deformities.\n';
+
+  // EYES / HEENT - chest pain and sob modules use 'heent'
+  const heentText = moduleSection('heent');
+  if (heentText) {
+    output += 'HEENT: ' + heentText + '\n';
+  } else {
+    output += 'Eyes: Open and symmetrical, no periorbital swelling or visible discharge. Pupils appear equal and reactive to light. No obvious scleral icterus or conjunctival injection.\n';
+    output += 'Ears: External ears normal in appearance, no discharge or visible lesions.\n';
+    output += 'Nose: Midline, no visible deformity or bleeding.\n';
+  }
+
+  // NECK
+  const neckText = moduleSection('neck');
+  output += 'Neck: ' + (neckText || 'Trachea appears midline, no visible swelling or masses.') + '\n';
+
+  // RESPIRATORY
+  const respText = moduleSection('resp');
+  output += 'Respiratory: ' + (respText || 'No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.') + '\n';
+
+  // CHEST WALL (only present in chest pain module - append after respiratory if present)
+  const chestWallText = moduleSection('chest_wall');
+  if (chestWallText) {
+    output += 'Chest Wall: ' + chestWallText + '\n';
+  }
+
+  // CARDIAC - inspection and auscultation may be separate sections
+  const cardiacInspText = moduleSection('cardiac_insp');
+  const cardiacAuscText = moduleSection('cardiac_ausc');
+  const cardiacText = moduleSection('cardiac'); // sob module uses single 'cardiac' key
+  if (cardiacInspText || cardiacAuscText) {
+    if (cardiacInspText) output += 'Cardiac (Inspection/Palpation): ' + cardiacInspText + '\n';
+    if (cardiacAuscText) output += 'Cardiac (Auscultation): ' + cardiacAuscText + '\n';
+  } else if (cardiacText) {
+    output += 'Cardiovascular: ' + cardiacText + '\n';
+  } else {
+    output += 'Cardiac: No visible pulsations or signs of distress. Regular rate and rhythm. Heart sounds normal.\n';
+  }
+
+  // ABDOMEN
+  // back_pain module reuses 'inspection', 'palpation', 'cva' keys for spine - exclude them from abdo block
+  const isBackPain = (complaint === 'back_pain');
+  const abdoInspText = isBackPain ? null : moduleSection('inspection');
+  const abdoAuscText = moduleSection('auscultation');
+  const abdoPalpText = isBackPain ? null : moduleSection('palpation');
+  const abdoOrgText = moduleSection('organomegaly');
+  const abdoPercText = moduleSection('percussion');
+  const abdoHernText = moduleSection('hernias');
+  const abdoCvaText = isBackPain ? null : moduleSection('cva');
+  const abdoRectalText = moduleSection('rectal');
+  const abdoText = isBackPain ? null : moduleSection('abdomen');
+  if (abdoInspText || abdoAuscText || abdoPalpText || abdoOrgText || abdoPercText || abdoHernText) {
+    if (abdoInspText) output += 'Abdomen (Inspection): ' + abdoInspText + '\n';
+    if (abdoAuscText) output += 'Abdomen (Auscultation): ' + abdoAuscText + '\n';
+    if (abdoPalpText) output += 'Abdomen (Palpation): ' + abdoPalpText + '\n';
+    if (abdoOrgText) output += 'Abdomen (Organomegaly/Masses): ' + abdoOrgText + '\n';
+    if (abdoPercText) output += 'Abdomen (Percussion): ' + abdoPercText + '\n';
+    if (abdoHernText) output += 'Hernias: ' + abdoHernText + '\n';
+    if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
+    if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
+  } else if (abdoText) {
+    output += 'Abdomen: ' + abdoText + '\n';
+    if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
+  } else if (!isBackPain) {
+    output += 'Abdomen: Soft, non-tender, non-distended. No guarding or rebound.\n';
+  }
+
+  // BACK
+  // chest pain module has a simple 'back' key; back pain module has palpation/inspection/cva/abdomen/rom/etc.
+  const backSimpleText = isBackPain ? null : moduleSection('back');
+  const romText = moduleSection('rom');
+  const neuroLowerText = moduleSection('neuro_lower');
+  const radText = moduleSection('radicular');
+  const hipText = moduleSection('hip');
+  const caudaText = moduleSection('cauda');
+  const vascText = moduleSection('vascular');
+  if (isBackPain) {
+    const bpInspText = moduleSection('inspection');
+    const bpPalpText = moduleSection('palpation');
+    const bpCvaText = moduleSection('cva');
+    const bpAbdoText = moduleSection('abdomen');
+    if (bpInspText) output += 'Back (Inspection): ' + bpInspText + '\n';
+    if (bpPalpText) output += 'Back (Palpation): ' + bpPalpText + '\n';
+    if (bpCvaText) output += 'CVA/Flank: ' + bpCvaText + '\n';
+    if (bpAbdoText) output += 'Abdomen: ' + bpAbdoText + '\n';
+    if (romText) output += 'Back (Range of Motion): ' + romText + '\n';
+    if (neuroLowerText) output += 'Lower Limb Neurological: ' + neuroLowerText + '\n';
+    if (radText) output += 'Radicular Provocation: ' + radText + '\n';
+    if (hipText) output += 'Hip/SI Screening: ' + hipText + '\n';
+    if (caudaText) output += 'Cauda Equina Screen: ' + caudaText + '\n';
+    if (vascText) output += 'Peripheral Vascular/DVT: ' + vascText + '\n';
+  } else if (backSimpleText) {
+    output += 'Back: ' + backSimpleText + '\n';
+  }
+
+  // EXTREMITIES
+  const extText = moduleSection('extremities');
+  output += 'Extremities: ' + (extText || 'Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.') + '\n';
+
+  // NEUROLOGICAL
+  const neuroText = moduleSection('neuro');
+  output += 'Neurological: ' + (neuroText || 'Patient converses appropriately, follows commands. No obvious motor deficits or facial asymmetry observed.') + '\n';
+
+  // SKIN
+  const skinText = moduleSection('skin');
+  output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
+
+  // PSYCHIATRIC - no complaint module covers this, always scaffold
+  output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
 
   // Synthesis
   if (synthesiEnabled) {
