@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ED Scribe Assistant</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #2d3748;
+    --accent: #2f81f7;
+    --accent2: #388bfd;
+    --green: #3fb950;
+    --orange: #f0883e;
+    --red: #f85149;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --radius: 8px;
+    --font: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+
+  header span {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--font);
+    font-weight: 500;
+  }
+
+  .tab-bar {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .panel { display: none; padding: 12px; }
+  .panel.active { display: block; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    transition: background 0.15s;
+  }
+  .section-header:active { background: var(--surface2); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .section-dot.active { background: var(--green); }
+  .section-dot.partial { background: var(--orange); }
+
+  .chevron {
+    font-size: 10px;
+    color: var(--text3);
+    transition: transform 0.2s;
+  }
+  .section-header.open .chevron { transform: rotate(180deg); }
+
+  .section-body {
+    display: none;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .section-body.open { display: block; }
+
+  .field-group {
+    margin-bottom: 12px;
+  }
+  .field-group:last-child { margin-bottom: 0; }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  select, input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font-ui);
+    padding: 9px 10px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236e7681' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  input[type="text"] {
+    background-image: none;
+    padding-right: 10px;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cb-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s;
+  }
+  .cb-item.checked {
+    border-color: var(--accent);
+    background: rgba(47, 129, 247, 0.08);
+  }
+
+  .cb-box {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .cb-item.checked .cb-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .cb-check {
+    font-size: 10px;
+    color: white;
+    display: none;
+  }
+  .cb-item.checked .cb-check { display: block; }
+
+  .cb-label {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label {
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .toggle {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    margin-bottom: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:active { background: var(--accent2); transform: scale(0.98); }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:active { background: var(--border); }
+
+  .btn-success {
+    background: var(--green);
+    color: #0d1117;
+  }
+  .btn-success:active { opacity: 0.85; transform: scale(0.98); }
+
+  .output-area {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    min-height: 120px;
+    font-family: var(--font-ui);
+    margin-bottom: 10px;
+  }
+
+  .info-box {
+    background: rgba(47, 129, 247, 0.1);
+    border: 1px solid rgba(47, 129, 247, 0.3);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green);
+    color: #0d1117;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .radio-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .radio-btn {
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .radio-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .ros-default-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .system-include {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+  .system-include-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .system-include-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .expand-btn {
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 3px 8px;
+    border: 1px solid rgba(47,129,247,0.3);
+    border-radius: 4px;
+    background: none;
+    white-space: nowrap;
+  }
+
+  .findings-panel {
+    display: none;
+    padding: 10px 0 4px 0;
+  }
+  .findings-panel.open { display: block; }
+
+  .finding-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 5px;
+    transition: background 0.1s;
+  }
+  .finding-row:active { background: var(--surface); }
+
+  .finding-status {
+    width: 28px;
+    height: 20px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+  .finding-status.not-complained { background: var(--surface2); border-color: var(--text3); color: var(--text2); }
+  .finding-status.complained { background: var(--red); border-color: var(--red); color: white; }
+
+  .finding-text {
+    font-size: 12px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .finding-hint {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .vital-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+  }
+
+  .vital-field input {
+    padding: 8px 10px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .exam-findings-sub {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .sub-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+
+  .finding-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .finding-item:last-child { border-bottom: none; }
+
+  .fi-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text3);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .finding-item.selected .fi-dot {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+
+  .fi-text {
+    font-size: 12px;
+    color: var(--text);
+    flex: 1;
+  }
+  .finding-item.selected .fi-text { color: var(--orange); }
+
+  .select-wrapper {
+    position: relative;
+  }
+
+  .multi-select-display {
+    min-height: 38px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 28px 6px 10px;
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    position: relative;
+  }
+  .multi-select-display::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text3);
+  }
+
+  .ms-tag {
+    background: rgba(47,129,247,0.2);
+    border: 1px solid rgba(47,129,247,0.4);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .ms-placeholder {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  .dropdown-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 150;
+  }
+  .dropdown-overlay.open { display: block; }
+
+  .dropdown-sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 151;
+    padding-bottom: 20px;
+  }
+
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 8px;
+  }
+
+  .sheet-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 8px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sheet-option {
+    display: flex;
+    align-items: center;
+    padding: 13px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    gap: 12px;
+    user-select: none;
+  }
+  .sheet-option:active { background: var(--surface2); }
+
+  .sheet-check {
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .sheet-option.selected .sheet-check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .sheet-option.selected .sheet-check::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .sheet-option-text {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .reset-btn {
+    font-size: 12px;
+    color: var(--red);
+    cursor: pointer;
+    padding: 4px 8px;
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 4px;
+    background: none;
+    float: right;
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ED Scribe Assistant</h1>
+  <span>Connolly ED</span>
+</header>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('ros')">ROS</button>
+  <button class="tab" onclick="showTab('exam')">Exam</button>
+  <button class="tab" onclick="showTab('output')">Output</button>
+</div>
+
+<!-- ======================== ROS PANEL ======================== -->
+<div id="panel-ros" class="panel active">
+
+  <div class="info-box">
+    Toggle systems on to expand findings. Each finding cycles: neutral (not mentioned) → does not complain of → complains of / admits to.
+  </div>
+
+  <!-- Default option -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot" id="dot-ros-default"></div>
+        ROS Mode
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field-group">
+        <div class="radio-group" id="ros-mode-group">
+          <div class="radio-btn selected" onclick="setRosMode('focused')" id="ros-mode-focused">Focused (default)</div>
+          <div class="radio-btn" onclick="setRosMode('full')" id="ros-mode-full">Full 14-system</div>
+        </div>
+      </div>
+      <div id="ros-focused-note" style="font-size:12px;color:var(--text2);line-height:1.5;">
+        Output: "A focused review of systems was performed and is negative except as noted in the HPI."
+      </div>
+    </div>
+  </div>
+
+  <!-- ROS Systems (hidden when focused mode) -->
+  <div id="ros-systems" style="display:none;">
+
+    <!-- Constitutional -->
+    <div class="section" id="sys-constitutional">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-constitutional"></div>
+          Constitutional
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-constitutional" onclick="event.stopPropagation();toggleSystem('constitutional')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-constitutional"></div>
+    </div>
+
+    <!-- Eyes -->
+    <div class="section" id="sys-eyes">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-eyes"></div>
+          Eyes
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-eyes" onclick="event.stopPropagation();toggleSystem('eyes')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-eyes"></div>
+    </div>
+
+    <!-- ENT -->
+    <div class="section" id="sys-ent">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-ent"></div>
+          ENT
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-ent" onclick="event.stopPropagation();toggleSystem('ent')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-ent"></div>
+    </div>
+
+    <!-- Cardiovascular -->
+    <div class="section" id="sys-cardiovascular">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-cardiovascular"></div>
+          Cardiovascular
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-cardiovascular" onclick="event.stopPropagation();toggleSystem('cardiovascular')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-cardiovascular"></div>
+    </div>
+
+    <!-- Respiratory -->
+    <div class="section" id="sys-respiratory">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-respiratory"></div>
+          Respiratory
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-respiratory" onclick="event.stopPropagation();toggleSystem('respiratory')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-respiratory"></div>
+    </div>
+
+    <!-- Gastrointestinal -->
+    <div class="section" id="sys-gi">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-gi"></div>
+          Gastrointestinal
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-gi" onclick="event.stopPropagation();toggleSystem('gi')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-gi"></div>
+    </div>
+
+    <!-- Genitourinary -->
+    <div class="section" id="sys-gu">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-gu"></div>
+          Genitourinary
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-gu" onclick="event.stopPropagation();toggleSystem('gu')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-gu"></div>
+    </div>
+
+    <!-- Musculoskeletal -->
+    <div class="section" id="sys-msk">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-msk"></div>
+          Musculoskeletal
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-msk" onclick="event.stopPropagation();toggleSystem('msk')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-msk"></div>
+    </div>
+
+    <!-- Skin -->
+    <div class="section" id="sys-skin">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-skin"></div>
+          Skin / Integumentary
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-skin" onclick="event.stopPropagation();toggleSystem('skin')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-skin"></div>
+    </div>
+
+    <!-- Neurological -->
+    <div class="section" id="sys-neuro">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-neuro"></div>
+          Neurological
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-neuro" onclick="event.stopPropagation();toggleSystem('neuro')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-neuro"></div>
+    </div>
+
+    <!-- Psychiatric -->
+    <div class="section" id="sys-psych">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-psych"></div>
+          Psychiatric
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-psych" onclick="event.stopPropagation();toggleSystem('psych')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-psych"></div>
+    </div>
+
+    <!-- Endocrine -->
+    <div class="section" id="sys-endo">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-endo"></div>
+          Endocrine
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-endo" onclick="event.stopPropagation();toggleSystem('endo')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-endo"></div>
+    </div>
+
+    <!-- Hematologic / Lymphatic -->
+    <div class="section" id="sys-heme">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-heme"></div>
+          Hematologic / Lymphatic
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-heme" onclick="event.stopPropagation();toggleSystem('heme')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-heme"></div>
+    </div>
+
+    <!-- Allergic / Immunologic -->
+    <div class="section" id="sys-allergy">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">
+          <div class="section-dot" id="dot-allergy"></div>
+          Allergic / Immunologic
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="toggle" id="toggle-allergy" onclick="event.stopPropagation();toggleSystem('allergy')"></div>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-allergy"></div>
+    </div>
+
+  </div><!-- end ros-systems -->
+
+</div><!-- end ros panel -->
+
+<!-- ======================== EXAM PANEL ======================== -->
+<div id="panel-exam" class="panel">
+
+  <div class="info-box">
+    The basic scaffold is always included. Select a complaint module to add focused exam elements. Tap any finding to cycle its state.
+  </div>
+
+  <!-- Patient descriptors -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot active" id="dot-patient-desc"></div>
+        Patient Description
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body open">
+      <div class="vitals-grid">
+        <div class="vital-field">
+          <label>Age Range</label>
+          <select id="pt-age" onchange="markExamDirty()">
+            <option value="adult">Adult</option>
+            <option value="young adult">Young adult</option>
+            <option value="middle-aged">Middle-aged</option>
+            <option value="elderly">Elderly</option>
+            <option value="older adult">Older adult</option>
+            <option value="pediatric">Pediatric</option>
+            <option value="adolescent">Adolescent</option>
+            <option value="infant">Infant</option>
+          </select>
+        </div>
+        <div class="vital-field">
+          <label>Sex</label>
+          <select id="pt-sex" onchange="markExamDirty()">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="person">Person</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Build / Nutrition</div>
+        <select id="pt-build" onchange="markExamDirty()">
+          <option value="well nourished, well developed">Well nourished, well developed</option>
+          <option value="thin, asthenic">Thin, asthenic</option>
+          <option value="cachectic, undernourished">Cachectic, undernourished</option>
+          <option value="overweight">Overweight</option>
+          <option value="obese">Obese</option>
+          <option value="morbidly obese">Morbidly obese</option>
+          <option value="muscular, athletic build">Muscular, athletic build</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Appearance / Grooming</div>
+        <select id="pt-appear" onchange="markExamDirty()">
+          <option value="well kempt, appropriately dressed">Well kempt, appropriately dressed</option>
+          <option value="unkempt">Unkempt</option>
+          <option value="dishevelled">Dishevelled</option>
+          <option value="well dressed">Well dressed</option>
+          <option value="underdressed for conditions">Underdressed for conditions</option>
+          <option value="inappropriately clothed">Inappropriately clothed</option>
+          <option value="malodorous">Malodorous</option>
+          <option value="wearing hospital gown">Wearing hospital gown</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vitals block -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot" id="dot-vitals"></div>
+        Vitals
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="vitals-grid">
+        <div class="vital-field">
+          <label>HR</label>
+          <input type="text" id="v-hr" placeholder="e.g. 78" oninput="markExamDirty()">
+        </div>
+        <div class="vital-field">
+          <label>BP</label>
+          <input type="text" id="v-bp" placeholder="e.g. 128/74" oninput="markExamDirty()">
+        </div>
+        <div class="vital-field">
+          <label>RR</label>
+          <input type="text" id="v-rr" placeholder="e.g. 16" oninput="markExamDirty()">
+        </div>
+        <div class="vital-field">
+          <label>Temp (°C)</label>
+          <input type="text" id="v-temp" placeholder="e.g. 37.1" oninput="markExamDirty()">
+        </div>
+        <div class="vital-field">
+          <label>SpO2 %</label>
+          <input type="text" id="v-spo2" placeholder="e.g. 98" oninput="markExamDirty()">
+        </div>
+        <div class="vital-field">
+          <label>O2 Delivery</label>
+          <select id="v-o2" onchange="markExamDirty()">
+            <option value="room air">Room air</option>
+            <option value="nasal cannula">Nasal cannula</option>
+            <option value="face mask">Face mask</option>
+            <option value="high-flow O2">High-flow O2</option>
+            <option value="non-rebreather mask">NRB mask</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complaint Module selector -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot" id="dot-complaint-module"></div>
+        Complaint Module
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body open">
+      <div class="field-group">
+        <div class="field-label">Select complaint</div>
+        <select id="complaint-select" onchange="loadComplaintModule()">
+          <option value="none">-- Basic scaffold only --</option>
+          <option value="chest_pain">Chest Pain</option>
+          <option value="sob">Shortness of Breath</option>
+          <option value="abdo_pain">Abdominal Pain</option>
+          <option value="back_pain">Back Pain</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic complaint module content -->
+  <div id="complaint-module-container"></div>
+
+  <!-- Red flag synthesis toggle -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-dot" id="dot-synthesis"></div>
+        Exam Synthesis / Red Flags
+      </div>
+      <div class="toggle" id="toggle-synthesis" onclick="toggleSynthesis()"></div>
+    </div>
+  </div>
+
+</div><!-- end exam panel -->
+
+<!-- ======================== OUTPUT PANEL ======================== -->
+<div id="panel-output" class="panel">
+  <button class="btn btn-primary" onclick="generateOutput()">Generate Note</button>
+  <div id="output-area" class="output-area" style="min-height:200px;">Tap Generate Note to build your output.</div>
+  <button class="btn btn-success" onclick="copyOutput()">Copy to Clipboard</button>
+  <button class="btn btn-secondary" onclick="resetAll()">Reset All Fields</button>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+// ============================================================
+// DATA DEFINITIONS
+// ============================================================
+
+const ROS_SYSTEMS = {
+  constitutional: {
+    label: 'Constitutional',
+    findings: ['fever','chills','night sweats','fatigue','unintentional weight loss','unintentional weight gain','malaise','loss of appetite','rigors','heat or cold intolerance']
+  },
+  eyes: {
+    label: 'Eyes',
+    findings: ['visual changes','blurred vision','double vision','eye pain','photophobia','eye discharge','eye redness','floaters or flashes','vision loss']
+  },
+  ent: {
+    label: 'ENT',
+    findings: ['sore throat','nasal congestion','rhinorrhoea','ear pain','hearing loss','tinnitus','epistaxis','hoarseness','dysphagia','odynophagia','mouth sores','dental pain','facial pain or pressure']
+  },
+  cardiovascular: {
+    label: 'Cardiovascular',
+    findings: ['chest pain','chest tightness or pressure','palpitations','syncope or near-syncope','exertional dyspnea','orthopnoea','paroxysmal nocturnal dyspnoea','leg swelling or oedema','claudication','exertional chest pain']
+  },
+  respiratory: {
+    label: 'Respiratory',
+    findings: ['shortness of breath','cough','productive cough','haemoptysis','wheezing','stridor','pleuritic chest pain','snoring or sleep apnoea symptoms']
+  },
+  gi: {
+    label: 'Gastrointestinal',
+    findings: ['nausea','vomiting','haematemesis','diarrhoea','constipation','abdominal pain','abdominal bloating','dysphagia','heartburn or reflux','rectal bleeding','melaena','jaundice','change in bowel habit','loss of appetite']
+  },
+  gu: {
+    label: 'Genitourinary',
+    findings: ['dysuria','haematuria','urinary frequency','urinary urgency','urinary incontinence','flank pain','suprapubic pain','nocturia','difficulty voiding','urethral discharge','vaginal discharge','vaginal bleeding (abnormal)','testicular pain','scrotal swelling']
+  },
+  msk: {
+    label: 'Musculoskeletal',
+    findings: ['joint pain','joint swelling','joint stiffness','back pain','neck pain','muscle aches or myalgia','muscle weakness','limited range of motion','bone pain','gait difficulty']
+  },
+  skin: {
+    label: 'Skin / Integumentary',
+    findings: ['rash','urticaria or hives','pruritus or itching','skin lesions','bruising or ecchymoses','wound or laceration','alopecia or hair loss','skin colour change','nail changes','jaundice or icterus']
+  },
+  neuro: {
+    label: 'Neurological',
+    findings: ['headache','dizziness or vertigo','presyncope','syncope','numbness or paraesthesia','limb weakness','speech difficulty','visual disturbance','tremor','seizures','confusion or cognitive change','memory loss','balance problems','gait instability','facial droop']
+  },
+  psych: {
+    label: 'Psychiatric',
+    findings: ['depression or low mood','anxiety','suicidal ideation','homicidal ideation','auditory hallucinations','visual hallucinations','paranoia or delusions','agitation','insomnia','mood swings','substance use concerns','self-harm','eating disturbance']
+  },
+  endo: {
+    label: 'Endocrine',
+    findings: ['polydipsia (excess thirst)','polyuria (excess urination)','heat or cold intolerance','excessive sweating','weight changes','fatigue','hair or skin changes','menstrual irregularities','neck swelling or goitre']
+  },
+  heme: {
+    label: 'Hematologic / Lymphatic',
+    findings: ['easy bruising','unusual bleeding','prolonged bleeding from wounds','lymph node swelling','fatigue or pallor','petechiae or purpura','recurrent infections','blood clot history','night sweats']
+  },
+  allergy: {
+    label: 'Allergic / Immunologic',
+    findings: ['allergic rhinitis symptoms','urticaria or hives','angioedema','anaphylaxis history','food allergy symptoms','drug allergy symptoms','recurrent infections','known immunodeficiency symptoms','environmental allergies']
+  }
+};
+
+// State: for each finding, 0=neutral, 1=does not complain of, 2=complains of/admits to
+const rosState = {};
+const rosSystems = {};  // true = included in full ROS
+let rosMode = 'focused';
+
+// Exam state
+let synthesiEnabled = false;
+let examDirty = false;
+
+// Complaint module exam findings state
+// key: findingId, value: boolean (selected/abnormal)
+const examFindings = {};
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  initROS();
+});
+
+function initROS() {
+  Object.keys(ROS_SYSTEMS).forEach(sysKey => {
+    rosSystems[sysKey] = false;
+    rosState[sysKey] = {};
+    ROS_SYSTEMS[sysKey].findings.forEach(f => {
+      rosState[sysKey][f] = 0;
+    });
+    buildSystemBody(sysKey);
+  });
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggleSection(header) {
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  if (body && body.classList.contains('section-body')) {
+    body.classList.toggle('open');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function markExamDirty() { examDirty = true; }
+
+// ============================================================
+// ROS LOGIC
+// ============================================================
+
+function setRosMode(mode) {
+  rosMode = mode;
+  document.querySelectorAll('#ros-mode-group .radio-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('ros-mode-' + mode).classList.add('selected');
+  document.getElementById('ros-systems').style.display = (mode === 'full') ? 'block' : 'none';
+  const note = document.getElementById('ros-focused-note');
+  note.style.display = (mode === 'focused') ? 'block' : 'none';
+  updateDot('dot-ros-default', mode === 'full' ? 'partial' : 'active');
+}
+
+function toggleSystem(sysKey) {
+  const isOn = !rosSystems[sysKey];
+  rosSystems[sysKey] = isOn;
+  const t = document.getElementById('toggle-' + sysKey);
+  if (isOn) t.classList.add('on'); else t.classList.remove('on');
+  updateSystemDot(sysKey);
+}
+
+function buildSystemBody(sysKey) {
+  const body = document.getElementById('body-' + sysKey);
+  if (!body) return;
+  const sys = ROS_SYSTEMS[sysKey];
+  let html = '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Tap finding to cycle: neutral → does not complain of → complains of/admits to</div>';
+  sys.findings.forEach(f => {
+    html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">
+      <div class="finding-status" id="status-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">–</div>
+      <div>
+        <div class="finding-text">${capitalizeFirst(f)}</div>
+      </div>
+    </div>`;
+  });
+  body.innerHTML = html;
+}
+
+function cycleRosFinding(sysKey, finding, rowEl) {
+  const cur = rosState[sysKey][finding];
+  const next = (cur + 1) % 3;
+  rosState[sysKey][finding] = next;
+  const id = finding.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'');
+  const statusEl = document.getElementById('status-' + sysKey + '-' + id);
+  if (next === 0) {
+    statusEl.textContent = '–';
+    statusEl.className = 'finding-status';
+  } else if (next === 1) {
+    statusEl.textContent = 'NEG';
+    statusEl.className = 'finding-status not-complained';
+  } else {
+    statusEl.textContent = 'POS';
+    statusEl.className = 'finding-status complained';
+  }
+  updateSystemDot(sysKey);
+}
+
+function updateSystemDot(sysKey) {
+  const dot = document.getElementById('dot-' + sysKey);
+  if (!dot) return;
+  if (!rosSystems[sysKey]) { updateDot('dot-' + sysKey, 'off'); return; }
+  const states = Object.values(rosState[sysKey]);
+  const hasPos = states.some(v => v === 2);
+  const hasAny = states.some(v => v > 0);
+  if (hasPos) updateDot('dot-' + sysKey, 'complained');
+  else if (hasAny) updateDot('dot-' + sysKey, 'partial');
+  else updateDot('dot-' + sysKey, 'active');
+}
+
+function updateDot(id, state) {
+  const dot = document.getElementById(id);
+  if (!dot) return;
+  dot.className = 'section-dot';
+  if (state === 'active' || state === 'partial') dot.classList.add('active');
+  if (state === 'complained') dot.classList.add('partial');
+}
+
+// ============================================================
+// EXAM MODULE LOGIC
+// ============================================================
+
+function toggleSynthesis() {
+  synthesiEnabled = !synthesiEnabled;
+  const t = document.getElementById('toggle-synthesis');
+  if (synthesiEnabled) t.classList.add('on'); else t.classList.remove('on');
+  updateDot('dot-synthesis', synthesiEnabled ? 'active' : 'off');
+}
+
+function loadComplaintModule() {
+  const val = document.getElementById('complaint-select').value;
+  const container = document.getElementById('complaint-module-container');
+  container.innerHTML = '';
+  if (val === 'none') return;
+  const modules = {
+    chest_pain: buildChestPainModule,
+    sob: buildSOBModule,
+    abdo_pain: buildAbdoPainModule,
+    back_pain: buildBackPainModule
+  };
+  if (modules[val]) modules[val](container);
+  updateDot('dot-complaint-module', 'active');
+}
+
+function examFindingEl(id, label, defaultNormal) {
+  // Returns HTML for a single exam finding toggle item
+  examFindings[id] = false;
+  return `<div class="finding-item" id="efi-${id}" onclick="toggleExamFinding('${id}',this)">
+    <div class="fi-dot"></div>
+    <div class="fi-text">${label}</div>
+  </div>`;
+}
+
+function toggleExamFinding(id, el) {
+  examFindings[id] = !examFindings[id];
+  if (examFindings[id]) el.classList.add('selected');
+  else el.classList.remove('selected');
+}
+
+function examSection(title, findingsArr) {
+  // findingsArr: [{id, normal, abnormal}]
+  let items = findingsArr.map(f => {
+    examFindings[f.id] = false;
+    return `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFinding2('${f.id}','${f.abnormal.replace(/'/g,"\\'")}',this)">
+      <div class="fi-dot"></div>
+      <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+    </div>`;
+  }).join('');
+  return `<div class="exam-findings-sub">
+    <div class="sub-label">${title}</div>
+    ${items}
+  </div>`;
+}
+
+function toggleExamFinding2(id, abnormal, el) {
+  examFindings[id] = !examFindings[id];
+  const textEl = document.getElementById('efit-' + id);
+  if (examFindings[id]) {
+    el.classList.add('selected');
+  } else {
+    el.classList.remove('selected');
+  }
+}
+
+// ============================================================
+// COMPLAINT MODULE BUILDERS
+// ============================================================
+
+function buildChestPainModule(container) {
+  // Store abnormal text alongside normal text for each finding
+  window.examData = window.examData || {};
+  window.examData.chest_pain = {
+    heent: [
+      {id:'cp_conjunctiva', normal:'Conjunctivae pink, sclerae anicteric', abnormal:'Conjunctival pallor present'},
+      {id:'cp_mm', normal:'Mucous membranes moist', abnormal:'Mucous membranes dry'}
+    ],
+    neck: [
+      {id:'cp_jvp', normal:'JVP not elevated', abnormal:'JVP elevated (estimated ___ cm at 45 degrees)'},
+      {id:'cp_trachea', normal:'Trachea midline', abnormal:'Tracheal deviation noted'},
+      {id:'cp_carotids', normal:'Carotids without bruits', abnormal:'Carotid bruit present on ___'},
+      {id:'cp_hjr', normal:'Hepatojugular reflux negative', abnormal:'Hepatojugular reflux positive'},
+      {id:'cp_nodes_neck', normal:'No cervical or supraclavicular lymphadenopathy', abnormal:'Lymphadenopathy present'}
+    ],
+    cardiac_insp: [
+      {id:'cp_heave', normal:'No precordial heave or thrill', abnormal:'Precordial heave present'},
+      {id:'cp_pmi', normal:'PMI normal, 5th ICS midclavicular line', abnormal:'PMI displaced laterally'}
+    ],
+    cardiac_ausc: [
+      {id:'cp_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm'},
+      {id:'cp_s1s2', normal:'S1, S2 normal', abnormal:'Abnormal heart sounds'},
+      {id:'cp_murmur', normal:'No murmurs, rubs, or gallops', abnormal:'Murmur audible'},
+      {id:'cp_s3', normal:'No S3', abnormal:'S3 present'},
+      {id:'cp_s4', normal:'No S4', abnormal:'S4 present'},
+      {id:'cp_rub', normal:'No pericardial friction rub', abnormal:'Pericardial friction rub present'}
+    ],
+    resp: [
+      {id:'cp_wob', normal:'Work of breathing normal, full sentences, no accessory muscle use', abnormal:'Increased work of breathing, accessory muscle use'},
+      {id:'cp_expansion', normal:'Chest expansion symmetric', abnormal:'Asymmetric chest expansion'},
+      {id:'cp_bs', normal:'Breath sounds clear bilaterally', abnormal:'Breath sounds abnormal'},
+      {id:'cp_wheezes', normal:'No wheeze, rales, or rhonchi', abnormal:'Wheeze present'},
+      {id:'cp_crackles', normal:'No crackles', abnormal:'Crackles at ___'},
+      {id:'cp_stridor', normal:'No audible stridor', abnormal:'Stridor audible'}
+    ],
+    chest_wall: [
+      {id:'cp_cw_tenderness', normal:'No chest wall tenderness, no costo-chondral tenderness', abnormal:'Chest wall tenderness on palpation at ___'},
+      {id:'cp_cw_repro', normal:'Pain not reproducible with palpation', abnormal:'Pain reproducible with palpation'},
+      {id:'cp_cw_crepitus', normal:'No crepitus', abnormal:'Crepitus present'}
+    ],
+    back: [
+      {id:'cp_back_tender', normal:'No midline spinal tenderness, no scapular tenderness', abnormal:'Spinal tenderness at ___'},
+      {id:'cp_cva', normal:'No CVA tenderness', abnormal:'CVA tenderness present on ___'}
+    ],
+    abdomen: [
+      {id:'cp_abd_soft', normal:'Abdomen soft, nondistended', abnormal:'Abdomen distended'},
+      {id:'cp_abd_tender', normal:'Nontender, including epigastrium and RUQ', abnormal:'Epigastric tenderness present'},
+      {id:'cp_aorta', normal:'No palpable pulsatile mass, no epigastric bruit', abnormal:'Pulsatile mass or bruit noted'}
+    ],
+    extremities: [
+      {id:'cp_pulses', normal:'Peripheral pulses 2+ and symmetric bilaterally', abnormal:'Pulses diminished on ___'},
+      {id:'cp_edema', normal:'No peripheral oedema', abnormal:'Peripheral oedema present, ___ pitting'},
+      {id:'cp_dvt', normal:'No unilateral calf swelling, erythema, warmth, or tenderness', abnormal:'DVT signs present on ___'},
+      {id:'cp_capref', normal:'Capillary refill less than 2 seconds', abnormal:'Capillary refill greater than 2 seconds'},
+      {id:'cp_cyanosis', normal:'No peripheral cyanosis or clubbing', abnormal:'Peripheral cyanosis present'}
+    ],
+    skin: [
+      {id:'cp_skin', normal:'Warm and dry, no diaphoresis, no rash or mottling', abnormal:'Diaphoresis present'},
+      {id:'cp_pallor', normal:'No pallor', abnormal:'Pallor noted'}
+    ],
+    neuro: [
+      {id:'cp_neuro', normal:'Alert and oriented x3, speech fluent, moves all extremities', abnormal:'Focal neurological deficit present'}
+    ]
+  };
+
+  let html = '';
+
+  const sectionDefs = [
+    {key:'heent', title:'HEENT'},
+    {key:'neck', title:'Neck'},
+    {key:'cardiac_insp', title:'Cardiac - Inspection / Palpation'},
+    {key:'cardiac_ausc', title:'Cardiac - Auscultation'},
+    {key:'resp', title:'Respiratory'},
+    {key:'chest_wall', title:'Chest Wall'},
+    {key:'back', title:'Back'},
+    {key:'abdomen', title:'Abdomen'},
+    {key:'extremities', title:'Extremities'},
+    {key:'skin', title:'Skin'},
+    {key:'neuro', title:'Neurological'}
+  ];
+
+  html += `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>Chest Pain Exam Findings</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap any finding to mark as ABNORMAL (shown in orange). Edit specific values in the generated output.</div>`;
+
+  sectionDefs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData.chest_pain[s.key].forEach(f => {
+      examFindings[f.id] = false;
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('chest_pain','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `</div></div>`;
+
+  // Synthesis block
+  html += `<div id="synthesis-chest" style="display:none;" class="section">
+    <div class="section-header">
+      <div class="section-title" style="font-size:12px;color:var(--text2);">Red Flag Synthesis (auto-generated on output)</div>
+    </div>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function buildSOBModule(container) {
+  window.examData = window.examData || {};
+  window.examData.sob = {
+    general: [
+      {id:'sob_gen', normal:'Speaking in full sentences, no tripod positioning', abnormal:'Unable to speak in full sentences, tripod positioning'},
+      {id:'sob_access', normal:'No accessory muscle use', abnormal:'Accessory muscle use present'}
+    ],
+    neck: [
+      {id:'sob_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'},
+      {id:'sob_trachea', normal:'Trachea midline', abnormal:'Tracheal deviation to ___'}
+    ],
+    resp: [
+      {id:'sob_expansion', normal:'Chest expansion symmetric', abnormal:'Asymmetric expansion'},
+      {id:'sob_perc', normal:'Percussion resonant throughout', abnormal:'Dullness to percussion at ___'},
+      {id:'sob_bs', normal:'Breath sounds present and equal bilaterally', abnormal:'Decreased or absent breath sounds at ___'},
+      {id:'sob_crackles', normal:'No crackles', abnormal:'Crackles at ___'},
+      {id:'sob_wheeze', normal:'No wheeze', abnormal:'Wheeze present'},
+      {id:'sob_rhonchi', normal:'No rhonchi', abnormal:'Rhonchi present'},
+      {id:'sob_stridor', normal:'No stridor', abnormal:'Stridor audible'},
+      {id:'sob_egoph', normal:'No egophony', abnormal:'Egophony present at ___'}
+    ],
+    cardiac: [
+      {id:'sob_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm'},
+      {id:'sob_s1s2', normal:'S1, S2 normal', abnormal:'Abnormal heart sounds'},
+      {id:'sob_s3', normal:'No S3 or S4', abnormal:'S3 present, consistent with volume overload'},
+      {id:'sob_murmur', normal:'No murmur', abnormal:'Murmur audible'}
+    ],
+    extremities: [
+      {id:'sob_edema', normal:'No peripheral oedema', abnormal:'Bilateral pitting oedema to ___'},
+      {id:'sob_dvt', normal:'No signs of DVT', abnormal:'DVT signs present on ___'},
+      {id:'sob_cyanosis', normal:'No peripheral cyanosis', abnormal:'Peripheral cyanosis present'},
+      {id:'sob_capref', normal:'Capillary refill less than 2 seconds', abnormal:'Capillary refill greater than 2 seconds'}
+    ],
+    skin: [
+      {id:'sob_diaphoresis', normal:'No diaphoresis', abnormal:'Diaphoresis present'},
+      {id:'sob_pallor', normal:'No pallor or mottling', abnormal:'Pallor or mottling present'},
+      {id:'sob_urticaria', normal:'No urticaria or angioedema', abnormal:'Urticaria or angioedema present'}
+    ]
+  };
+
+  let html = `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>Shortness of Breath Exam Findings</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+
+  const secs = [
+    {key:'general',title:'General / Work of Breathing'},
+    {key:'neck',title:'Neck'},
+    {key:'resp',title:'Respiratory'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'extremities',title:'Extremities'},
+    {key:'skin',title:'Skin'}
+  ];
+  secs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData.sob[s.key].forEach(f => {
+      examFindings[f.id] = false;
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('sob','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+function buildAbdoPainModule(container) {
+  window.examData = window.examData || {};
+  window.examData.abdo_pain = {
+    inspection: [
+      {id:'ap_inspect', normal:'Abdomen flat, no visible distension, no scars or masses', abnormal:'Abdomen distended'},
+      {id:'ap_pulsation', normal:'No visible peristalsis or pulsation', abnormal:'Visible pulsation or peristalsis'}
+    ],
+    auscultation: [
+      {id:'ap_bs_normal', normal:'Bowel sounds normal', abnormal:'Bowel sounds absent'},
+      {id:'ap_bs_hyper', normal:'No hyperactive or tinkling bowel sounds', abnormal:'Hyperactive or tinkling bowel sounds present'},
+      {id:'ap_bruit', normal:'No abdominal bruit', abnormal:'Abdominal bruit audible'}
+    ],
+    palpation: [
+      {id:'ap_soft', normal:'Abdomen soft', abnormal:'Abdomen rigid or board-like'},
+      {id:'ap_epigastric', normal:'No epigastric tenderness', abnormal:'Epigastric tenderness present'},
+      {id:'ap_ruq', normal:'No RUQ tenderness', abnormal:'RUQ tenderness present'},
+      {id:'ap_luq', normal:'No LUQ tenderness', abnormal:'LUQ tenderness present'},
+      {id:'ap_rlq', normal:'No RLQ tenderness', abnormal:'RLQ tenderness present'},
+      {id:'ap_llq', normal:'No LLQ tenderness', abnormal:'LLQ tenderness present'},
+      {id:'ap_guarding', normal:'No guarding', abnormal:'Guarding present'},
+      {id:'ap_rebound', normal:'No rebound tenderness', abnormal:'Rebound tenderness present'},
+      {id:'ap_rigidity', normal:'No involuntary rigidity', abnormal:'Involuntary rigidity present'},
+      {id:'ap_murphy', normal:'Murphy sign negative', abnormal:'Murphy sign positive'},
+      {id:'ap_mcburney', normal:'No McBurney point tenderness', abnormal:'McBurney point tenderness present'},
+      {id:'ap_rovsing', normal:'Rovsing sign negative', abnormal:'Rovsing sign positive'},
+      {id:'ap_psoas', normal:'Psoas sign negative', abnormal:'Psoas sign positive'}
+    ],
+    organomegaly: [
+      {id:'ap_liver', normal:'Liver edge not palpable', abnormal:'Hepatomegaly, edge palpable ___ cm below costal margin'},
+      {id:'ap_spleen', normal:'Spleen not palpable', abnormal:'Splenomegaly present'},
+      {id:'ap_mass', normal:'No palpable abdominal mass', abnormal:'Palpable abdominal mass in ___'},
+      {id:'ap_aorta', normal:'No palpable pulsatile mass, no epigastric bruit', abnormal:'Pulsatile mass or bruit - concern for AAA'}
+    ],
+    percussion: [
+      {id:'ap_perc', normal:'Tympanic throughout, no dullness to percussion in flanks', abnormal:'Shifting dullness or flank dullness suggesting ascites'},
+      {id:'ap_fluid_wave', normal:'No fluid wave', abnormal:'Fluid wave present'}
+    ],
+    hernias: [
+      {id:'ap_hernia', normal:'No inguinal or femoral hernia palpated', abnormal:'Hernia palpable at ___'}
+    ],
+    cva: [
+      {id:'ap_cva', normal:'No CVA tenderness bilaterally', abnormal:'CVA tenderness present on ___'}
+    ],
+    rectal: [
+      {id:'ap_rectal', normal:'Rectal exam not indicated / not performed', abnormal:'Rectal exam performed - findings documented separately'}
+    ]
+  };
+
+  let html = `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>Abdominal Pain Exam Findings</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+
+  const secs = [
+    {key:'inspection',title:'Inspection'},
+    {key:'auscultation',title:'Auscultation'},
+    {key:'palpation',title:'Palpation and Tenderness'},
+    {key:'organomegaly',title:'Organomegaly / Masses'},
+    {key:'percussion',title:'Percussion / Ascites'},
+    {key:'hernias',title:'Hernias'},
+    {key:'cva',title:'Flank / CVA'},
+    {key:'rectal',title:'Rectal'}
+  ];
+
+  secs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData.abdo_pain[s.key].forEach(f => {
+      examFindings[f.id] = false;
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('abdo_pain','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+function buildBackPainModule(container) {
+  window.examData = window.examData || {};
+  window.examData.back_pain = {
+    general: [
+      {id:'bp_gait', normal:'Gait normal and steady', abnormal:'Antalgic gait observed'},
+      {id:'bp_posture', normal:'Posture upright, shoulders level, no scoliosis or kyphosis', abnormal:'Scoliosis or kyphosis noted'},
+      {id:'bp_heel_toe', normal:'Heel walk and toe walk intact', abnormal:'Heel or toe walk limited by pain or weakness'},
+      {id:'bp_sit_stand', normal:'Sit to stand without assistance', abnormal:'Requires assistance to stand'}
+    ],
+    inspection: [
+      {id:'bp_deformity', normal:'No visible deformity, stepoff, or swelling over spine', abnormal:'Visible deformity or stepoff present'},
+      {id:'bp_skin_back', normal:'No skin lesions, rash, or vesicular eruption over back', abnormal:'Skin lesion or vesicular rash in dermatomal distribution'}
+    ],
+    palpation: [
+      {id:'bp_midline', normal:'Midline spinous processes nontender to palpation and percussion', abnormal:'Midline tenderness at ___'},
+      {id:'bp_paraspinal', normal:'Paraspinal muscles nontender, no spasm', abnormal:'Paraspinal tenderness or spasm present at ___'},
+      {id:'bp_si', normal:'Sacroiliac joints nontender bilaterally', abnormal:'SI joint tenderness on ___'}
+    ],
+    rom: [
+      {id:'bp_rom', normal:'Range of motion full in flexion, extension, lateral bend, and rotation, without radicular reproduction', abnormal:'ROM limited by pain, radicular reproduction at ___'}
+    ],
+    cva: [
+      {id:'bp_cva', normal:'No CVA tenderness bilaterally', abnormal:'CVA tenderness on ___'}
+    ],
+    abdomen: [
+      {id:'bp_abd', normal:'Abdomen soft, nontender, nondistended', abnormal:'Abdominal tenderness present'},
+      {id:'bp_aorta_bp', normal:'No palpable pulsatile mass, no epigastric bruit', abnormal:'Pulsatile mass or bruit - concern for AAA'}
+    ],
+    neuro_lower: [
+      {id:'bp_motor', normal:'Lower limb motor strength MRC 5/5 bilaterally (L2-S1)', abnormal:'Focal motor weakness: ___'},
+      {id:'bp_sensation', normal:'Sensation to light touch intact L2-S1 dermatomal distribution bilaterally', abnormal:'Dermatomal sensory loss at ___'},
+      {id:'bp_reflexes', normal:'Patellar and Achilles reflexes 2+ and symmetric', abnormal:'Reflex asymmetry: ___'},
+      {id:'bp_plantar', normal:'Plantar responses downgoing bilaterally', abnormal:'Upgoing plantar on ___'},
+      {id:'bp_clonus', normal:'No clonus', abnormal:'Clonus present'},
+      {id:'bp_hoffmann', normal:'Hoffmann absent bilaterally', abnormal:'Hoffmann present on ___'}
+    ],
+    radicular: [
+      {id:'bp_slr', normal:'Supine straight leg raise negative bilaterally to 70-90 degrees', abnormal:'SLR positive on ___ at ___ degrees'},
+      {id:'bp_crossed_slr', normal:'Crossed straight leg raise negative', abnormal:'Crossed SLR positive'},
+      {id:'bp_slump', normal:'Slump test negative', abnormal:'Slump test positive'}
+    ],
+    hip: [
+      {id:'bp_hip', normal:'Hips full range of motion bilaterally, internal and external rotation normal', abnormal:'Hip ROM limited on ___'},
+      {id:'bp_si_provoc', normal:'SI provocation tests negative (FABER, Gaenslen, pelvic compression)', abnormal:'SI provocation positive on ___'}
+    ],
+    cauda: [
+      {id:'bp_saddle', normal:'Saddle sensation intact bilaterally', abnormal:'Saddle sensory deficit present'},
+      {id:'bp_anal_tone', normal:'Anal tone not tested (not clinically indicated)', abnormal:'Reduced anal tone on exam'},
+      {id:'bp_suprapubic', normal:'No suprapubic fullness or distension', abnormal:'Suprapubic fullness present'}
+    ],
+    vascular: [
+      {id:'bp_pulses', normal:'Dorsalis pedis and posterior tibial pulses 2+ and symmetric', abnormal:'Peripheral pulses diminished on ___'},
+      {id:'bp_capref', normal:'Capillary refill less than 2 seconds bilaterally', abnormal:'Capillary refill prolonged on ___'},
+      {id:'bp_dvt_back', normal:'No unilateral leg swelling, erythema, warmth, or calf tenderness', abnormal:'DVT signs present on ___'}
+    ]
+  };
+
+  let html = `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>Back Pain Exam Findings</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to mark ABNORMAL.</div>`;
+
+  const secs = [
+    {key:'general',title:'General / Gait'},
+    {key:'inspection',title:'Inspection'},
+    {key:'palpation',title:'Palpation'},
+    {key:'rom',title:'Range of Motion'},
+    {key:'cva',title:'CVA / Flank'},
+    {key:'abdomen',title:'Abdomen / Aorta'},
+    {key:'neuro_lower',title:'Lower Limb Neurological'},
+    {key:'radicular',title:'Radicular Provocation Tests'},
+    {key:'hip',title:'Hip / SI Screening'},
+    {key:'cauda',title:'Cauda Equina Screen'},
+    {key:'vascular',title:'Peripheral Vascular / DVT'}
+  ];
+
+  secs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData.back_pain[s.key].forEach(f => {
+      examFindings[f.id] = false;
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('back_pain','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+function toggleExamFindingData(module, section, id, el) {
+  examFindings[id] = !examFindings[id];
+  const textEl = document.getElementById('efit-' + id);
+  if (examFindings[id]) {
+    el.classList.add('selected');
+    textEl.textContent = window.examData[module][section].find(f => f.id === id).abnormal;
+  } else {
+    el.classList.remove('selected');
+    textEl.textContent = window.examData[module][section].find(f => f.id === id).normal;
+  }
+}
+
+// ============================================================
+// OUTPUT GENERATION
+// ============================================================
+
+function generateOutput() {
+  let output = '';
+
+  // ----- ROS -----
+  output += 'REVIEW OF SYSTEMS\n';
+  output += '-'.repeat(40) + '\n';
+
+  if (rosMode === 'focused') {
+    output += 'A focused review of systems was performed and is negative except as noted in the HPI.\n';
+  } else {
+    const systemLines = [];
+    Object.keys(ROS_SYSTEMS).forEach(sysKey => {
+      if (!rosSystems[sysKey]) return;
+      const sys = ROS_SYSTEMS[sysKey];
+      const complained = [];
+      const notComplained = [];
+      Object.entries(rosState[sysKey]).forEach(([finding, state]) => {
+        if (state === 2) complained.push(finding);
+        else if (state === 1) notComplained.push(finding);
+      });
+      let line = sys.label + ': ';
+      if (complained.length === 0 && notComplained.length === 0) {
+        line += 'patient does not complain of ' + listFindings(sys.findings) + '.';
+      } else {
+        const parts = [];
+        if (complained.length > 0) {
+          parts.push('patient complains of ' + listFindings(complained) + '.');
+        }
+        if (notComplained.length > 0) {
+          parts.push('Patient does not complain of ' + listFindings(notComplained) + '.');
+        }
+        line += parts.join(' ');
+      }
+      systemLines.push(line);
+    });
+    if (systemLines.length === 0) {
+      output += 'A focused review of systems was performed and is negative except as noted in the HPI.\n';
+    } else {
+      output += 'Review of systems is notable for: ' + systemLines.join(' ') + '\n';
+    }
+  }
+
+  // ----- PHYSICAL EXAM -----
+  output += '\nPHYSICAL EXAMINATION\n';
+  output += '-'.repeat(40) + '\n';
+
+  // Basic scaffold
+  const age = document.getElementById('pt-age').value;
+  const sex = document.getElementById('pt-sex').value;
+  const build = document.getElementById('pt-build').value;
+  const appear = document.getElementById('pt-appear').value;
+
+  output += `General: Patient is a ${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.\n`;
+  output += 'Head: Normocephalic, atraumatic. No visible injuries or deformities.\n';
+  output += 'Eyes: Open and symmetrical, no periorbital swelling or visible discharge. Pupils appear equal and reactive to light. No obvious scleral icterus or conjunctival injection.\n';
+  output += 'Ears: External ears normal in appearance, no discharge or visible lesions. Patient responds to verbal stimuli without difficulty.\n';
+  output += 'Nose: Midline, no visible deformity or bleeding.\n';
+  output += 'Neck: Trachea appears midline, no visible swelling or masses.\n';
+  output += 'Respiratory: No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.\n';
+  output += 'Cardiac: No visible pulsations or signs of distress. Skin color normal, no cyanosis or pallor.\n';
+  output += 'Extremities: Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.\n';
+  output += 'Neurological: Patient converses appropriately, follows commands. No obvious motor deficits or facial asymmetry observed.\n';
+  output += 'Skin: Intact, appropriate in colour, no visible rash, wounds, or lesions.\n';
+  output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
+
+  // Vitals
+  const hr = document.getElementById('v-hr').value;
+  const bp = document.getElementById('v-bp').value;
+  const rr = document.getElementById('v-rr').value;
+  const temp = document.getElementById('v-temp').value;
+  const spo2 = document.getElementById('v-spo2').value;
+  const o2 = document.getElementById('v-o2').value;
+
+  if (hr || bp || rr || temp || spo2) {
+    output += '\nVitals reviewed: ';
+    const vparts = [];
+    if (hr) vparts.push('HR ' + hr);
+    if (bp) vparts.push('BP ' + bp);
+    if (rr) vparts.push('RR ' + rr);
+    if (temp) vparts.push('Temp ' + temp + ' degrees C');
+    if (spo2) vparts.push('SpO2 ' + spo2 + '% on ' + o2);
+    output += vparts.join(', ') + '.\n';
+  }
+
+  // Complaint module
+  const complaint = document.getElementById('complaint-select').value;
+  if (complaint !== 'none' && window.examData && window.examData[complaint]) {
+    output += '\nFOCUSED EXAMINATION: ' + getComplaintLabel(complaint).toUpperCase() + '\n';
+    const moduleData = window.examData[complaint];
+    Object.entries(moduleData).forEach(([section, findings]) => {
+      const abnormal = findings.filter(f => examFindings[f.id]);
+      const normal = findings.filter(f => !examFindings[f.id]);
+      if (abnormal.length === 0 && normal.length === 0) return;
+      const sectionLabel = formatSectionLabel(section);
+      let sectionText = sectionLabel + ': ';
+      if (abnormal.length > 0) {
+        sectionText += abnormal.map(f => f.abnormal).join('. ') + '. ';
+      }
+      const normalTexts = normal.map(f => f.normal);
+      if (normalTexts.length > 0) {
+        // For conciseness, bundle normal into a sentence
+        sectionText += normalTexts.join('. ') + '.';
+      }
+      output += sectionText + '\n';
+    });
+  }
+
+  // Synthesis
+  if (synthesiEnabled) {
+    output += '\n' + getSynthesisText(complaint) + '\n';
+  }
+
+  document.getElementById('output-area').textContent = output.trim();
+  showTab('output');
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    if(i===2) t.classList.add('active'); else t.classList.remove('active');
+  });
+}
+
+function getComplaintLabel(key) {
+  const map = {chest_pain:'Chest Pain',sob:'Shortness of Breath',abdo_pain:'Abdominal Pain',back_pain:'Back Pain'};
+  return map[key] || key;
+}
+
+function formatSectionLabel(key) {
+  const map = {
+    heent:'HEENT', neck:'Neck', cardiac_insp:'Cardiac (Inspection/Palpation)', cardiac_ausc:'Cardiac (Auscultation)',
+    resp:'Respiratory', chest_wall:'Chest Wall', back:'Back', abdomen:'Abdomen', extremities:'Extremities',
+    skin:'Skin', neuro:'Neurological', general:'General', inspection:'Inspection', auscultation:'Auscultation',
+    palpation:'Palpation', organomegaly:'Organomegaly/Masses', percussion:'Percussion', hernias:'Hernias',
+    cva:'CVA/Flank', rectal:'Rectal', cardiac:'Cardiovascular', rom:'Range of Motion',
+    neuro_lower:'Lower Limb Neurological', radicular:'Radicular Provocation', hip:'Hip/SI Screening',
+    cauda:'Cauda Equina Screen', vascular:'Peripheral Vascular/DVT', si:'SI Joints'
+  };
+  return map[key] || key.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function getSynthesisText(complaint) {
+  const synthMap = {
+    chest_pain: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+ACS: No diaphoresis at rest, no new S3, no new murmur, no signs of heart failure.
+Aortic dissection: No inter-arm BP difference documented, no pulse deficit, no new diastolic murmur, no focal neurological deficit.
+PE: No unilateral leg swelling or tenderness, no tachypnoea at rest, lungs clear bilaterally.
+Pneumothorax: Trachea midline, symmetric expansion, no focal hyperresonance, no absent breath sounds.
+Pericarditis: No pericardial rub, no positional chest pain observed on exam.
+Abnormalities noted above addressed in MDM.`,
+    sob: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Tension pneumothorax: Trachea midline, symmetric expansion, no absent unilateral breath sounds.
+Pulmonary oedema: No S3, no bilateral crackles, no elevated JVP.
+PE: No unilateral DVT signs, no pleuritic pattern.
+Anaphylaxis: No urticaria, angioedema, or bronchospasm on exam.
+Abnormalities noted above addressed in MDM.`,
+    abdo_pain: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Peritonitis: No involuntary guarding, no rebound, no board-like rigidity.
+AAA: No pulsatile abdominal mass, no epigastric bruit, no haemodynamic instability signs.
+Bowel obstruction: No distension, no tinkling bowel sounds.
+Appendicitis: No McBurney tenderness, no Rovsing or psoas signs.
+Cholecystitis: Murphy sign negative, no RUQ peritonism.
+Abnormalities noted above addressed in MDM.`,
+    back_pain: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Cauda equina: Saddle sensation intact, no reduced anal tone, no urinary retention or incontinence.
+Fracture / instability: No focal bony tenderness, no stepoff or deformity.
+Infection / malignancy: No fever or systemic toxicity, no focal bony percussion tenderness.
+Cord compression: No upper motor neuron signs, no clonus, Hoffmann absent, plantar responses downgoing.
+AAA / visceral: No pulsatile abdominal mass, no bruit, no CVA tenderness.
+Abnormalities noted above addressed in MDM.`,
+    none: ''
+  };
+  return synthMap[complaint] || '';
+}
+
+function copyOutput() {
+  const text = document.getElementById('output-area').textContent;
+  if (!text || text === 'Tap Generate Note to build your output.') {
+    showToast('Generate note first');
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied to clipboard');
+  }).catch(() => {
+    // Fallback for older Android browsers
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Copied to clipboard');
+  });
+}
+
+function resetAll() {
+  // Reset ROS
+  Object.keys(ROS_SYSTEMS).forEach(sysKey => {
+    rosSystems[sysKey] = false;
+    const t = document.getElementById('toggle-' + sysKey);
+    if (t) t.classList.remove('on');
+    Object.keys(rosState[sysKey]).forEach(f => { rosState[sysKey][f] = 0; });
+    buildSystemBody(sysKey);
+    updateSystemDot(sysKey);
+  });
+  setRosMode('focused');
+
+  // Reset exam
+  document.getElementById('pt-age').value = 'adult';
+  document.getElementById('pt-sex').value = 'male';
+  document.getElementById('pt-build').value = 'well nourished, well developed';
+  document.getElementById('pt-appear').value = 'well kempt, appropriately dressed';
+  document.getElementById('v-hr').value = '';
+  document.getElementById('v-bp').value = '';
+  document.getElementById('v-rr').value = '';
+  document.getElementById('v-temp').value = '';
+  document.getElementById('v-spo2').value = '';
+  document.getElementById('v-o2').value = 'room air';
+  document.getElementById('complaint-select').value = 'none';
+  document.getElementById('complaint-module-container').innerHTML = '';
+  Object.keys(examFindings).forEach(k => { examFindings[k] = false; });
+  synthesiEnabled = false;
+  document.getElementById('toggle-synthesis').classList.remove('on');
+
+  // Reset output
+  document.getElementById('output-area').textContent = 'Tap Generate Note to build your output.';
+  showToast('All fields reset');
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function listFindings(arr) {
+  if (arr.length === 0) return '';
+  if (arr.length === 1) return arr[0];
+  if (arr.length === 2) return arr[0] + ' or ' + arr[1];
+  return arr.slice(0,-1).join(', ') + ', or ' + arr[arr.length-1];
+}
+
+</script>
+</body>
+</html>
