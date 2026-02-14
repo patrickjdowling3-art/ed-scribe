@@ -520,6 +520,11 @@
     background: var(--orange);
     border-color: var(--orange);
   }
+  .finding-item.omit .fi-dot {
+    background: transparent;
+    border-color: var(--text3);
+    opacity: 0.35;
+  }
 
   .fi-text {
     font-size: 12px;
@@ -527,6 +532,11 @@
     flex: 1;
   }
   .finding-item.selected .fi-text { color: var(--orange); }
+  .finding-item.omit .fi-text {
+    color: var(--text3);
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
 
   .select-wrapper {
     position: relative;
@@ -922,7 +932,7 @@
 <div id="panel-exam" class="panel">
 
   <div class="info-box">
-    The basic scaffold is always included. Select a complaint module to add focused exam elements. Tap any finding to cycle its state.
+    The basic scaffold is always included. Select a complaint module to add focused exam elements. Tap once: mark ABNORMAL (orange). Tap twice: OMIT from note (strikethrough). Tap again: restore NORMAL.
   </div>
 
   <!-- Patient descriptors -->
@@ -937,16 +947,21 @@
     <div class="section-body open">
       <div class="vitals-grid">
         <div class="vital-field">
-          <label>Age Range</label>
+          <label>Age (years)</label>
+          <input type="number" id="pt-age-num" placeholder="e.g. 54" min="0" max="120" oninput="markExamDirty()" style="width:100%">
+        </div>
+        <div class="vital-field">
+          <label>Age Descriptor</label>
           <select id="pt-age" onchange="markExamDirty()">
-            <option value="adult">Adult</option>
-            <option value="young adult">Young adult</option>
-            <option value="middle-aged">Middle-aged</option>
-            <option value="elderly">Elderly</option>
-            <option value="older adult">Older adult</option>
-            <option value="pediatric">Pediatric</option>
-            <option value="adolescent">Adolescent</option>
             <option value="infant">Infant</option>
+            <option value="toddler">Toddler</option>
+            <option value="child">Child</option>
+            <option value="adolescent">Adolescent</option>
+            <option value="young adult">Young adult</option>
+            <option value="adult">Adult</option>
+            <option value="middle-aged adult">Middle-aged adult</option>
+            <option value="older adult">Older adult</option>
+            <option value="elderly adult">Elderly adult</option>
           </select>
         </div>
         <div class="vital-field">
@@ -1307,8 +1322,7 @@ function loadComplaintModule() {
 }
 
 function examFindingEl(id, label, defaultNormal) {
-  // Returns HTML for a single exam finding toggle item
-  examFindings[id] = false;
+  examFindings[id] = 'normal';
   return `<div class="finding-item" id="efi-${id}" onclick="toggleExamFinding('${id}',this)">
     <div class="fi-dot"></div>
     <div class="fi-text">${label}</div>
@@ -1316,15 +1330,18 @@ function examFindingEl(id, label, defaultNormal) {
 }
 
 function toggleExamFinding(id, el) {
-  examFindings[id] = !examFindings[id];
-  if (examFindings[id]) el.classList.add('selected');
-  else el.classList.remove('selected');
+  const current = examFindings[id] || 'normal';
+  const next = current === 'normal' ? 'abnormal' : current === 'abnormal' ? 'omit' : 'normal';
+  examFindings[id] = next;
+  el.classList.remove('selected', 'omit');
+  if (next === 'abnormal') el.classList.add('selected');
+  else if (next === 'omit') el.classList.add('omit');
 }
 
 function examSection(title, findingsArr) {
   // findingsArr: [{id, normal, abnormal}]
   let items = findingsArr.map(f => {
-    examFindings[f.id] = false;
+    examFindings[f.id] = 'normal';
     return `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFinding2('${f.id}','${f.abnormal.replace(/'/g,"\\'")}',this)">
       <div class="fi-dot"></div>
       <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
@@ -1337,12 +1354,15 @@ function examSection(title, findingsArr) {
 }
 
 function toggleExamFinding2(id, abnormal, el) {
-  examFindings[id] = !examFindings[id];
+  const current = examFindings[id] || 'normal';
+  const next = current === 'normal' ? 'abnormal' : current === 'abnormal' ? 'omit' : 'normal';
+  examFindings[id] = next;
   const textEl = document.getElementById('efit-' + id);
-  if (examFindings[id]) {
+  el.classList.remove('selected', 'omit');
+  if (next === 'abnormal') {
     el.classList.add('selected');
-  } else {
-    el.classList.remove('selected');
+  } else if (next === 'omit') {
+    el.classList.add('omit');
   }
 }
 
@@ -1442,7 +1462,7 @@ function buildChestPainModule(container) {
   sectionDefs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData.chest_pain[s.key].forEach(f => {
-      examFindings[f.id] = false;
+      examFindings[f.id] = 'normal';
       html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('chest_pain','${s.key}','${f.id}',this)">
         <div class="fi-dot"></div>
         <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
@@ -1522,7 +1542,7 @@ function buildSOBModule(container) {
   secs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData.sob[s.key].forEach(f => {
-      examFindings[f.id] = false;
+      examFindings[f.id] = 'normal';
       html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('sob','${s.key}','${f.id}',this)">
         <div class="fi-dot"></div>
         <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
@@ -1604,7 +1624,7 @@ function buildAbdoPainModule(container) {
   secs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData.abdo_pain[s.key].forEach(f => {
-      examFindings[f.id] = false;
+      examFindings[f.id] = 'normal';
       html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('abdo_pain','${s.key}','${f.id}',this)">
         <div class="fi-dot"></div>
         <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
@@ -1698,7 +1718,7 @@ function buildBackPainModule(container) {
   secs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData.back_pain[s.key].forEach(f => {
-      examFindings[f.id] = false;
+      examFindings[f.id] = 'normal';
       html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('back_pain','${s.key}','${f.id}',this)">
         <div class="fi-dot"></div>
         <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
@@ -1711,14 +1731,20 @@ function buildBackPainModule(container) {
 }
 
 function toggleExamFindingData(module, section, id, el) {
-  examFindings[id] = !examFindings[id];
+  const current = examFindings[id] || 'normal';
+  const next = current === 'normal' ? 'abnormal' : current === 'abnormal' ? 'omit' : 'normal';
+  examFindings[id] = next;
+  const finding = window.examData[module][section].find(f => f.id === id);
   const textEl = document.getElementById('efit-' + id);
-  if (examFindings[id]) {
+  el.classList.remove('selected', 'omit');
+  if (next === 'abnormal') {
     el.classList.add('selected');
-    textEl.textContent = window.examData[module][section].find(f => f.id === id).abnormal;
+    textEl.textContent = finding.abnormal;
+  } else if (next === 'omit') {
+    el.classList.add('omit');
+    textEl.textContent = finding.normal;
   } else {
-    el.classList.remove('selected');
-    textEl.textContent = window.examData[module][section].find(f => f.id === id).normal;
+    textEl.textContent = finding.normal;
   }
 }
 
@@ -1772,33 +1798,35 @@ function generateOutput() {
   output += '\nPHYSICAL EXAMINATION\n';
   output += '-'.repeat(40) + '\n';
 
+  const ageNum = document.getElementById('pt-age-num').value.trim();
   const age = document.getElementById('pt-age').value;
   const sex = document.getElementById('pt-sex').value;
   const build = document.getElementById('pt-build').value;
   const appear = document.getElementById('pt-appear').value;
 
-  // Vitals
-  const hr = document.getElementById('v-hr').value;
-  const bp = document.getElementById('v-bp').value;
-  const rr = document.getElementById('v-rr').value;
-  const temp = document.getElementById('v-temp').value;
-  const spo2 = document.getElementById('v-spo2').value;
+  const agePrefix = ageNum ? `${ageNum} year old ` : '';
+
+  // Vitals - always output, blanks where not entered
+  const hr = document.getElementById('v-hr').value.trim();
+  const bp = document.getElementById('v-bp').value.trim();
+  const rr = document.getElementById('v-rr').value.trim();
+  const temp = document.getElementById('v-temp').value.trim();
+  const spo2 = document.getElementById('v-spo2').value.trim();
   const o2 = document.getElementById('v-o2').value;
 
-  if (hr || bp || rr || temp || spo2) {
-    const vparts = [];
-    if (hr) vparts.push('HR ' + hr);
-    if (bp) vparts.push('BP ' + bp);
-    if (rr) vparts.push('RR ' + rr);
-    if (temp) vparts.push('Temp ' + temp + ' degrees C');
-    if (spo2) vparts.push('SpO2 ' + spo2 + '% on ' + o2);
-    output += 'Vitals: ' + vparts.join(', ') + '.\n';
-  }
+  output += 'Vitals: ';
+  output += 'Temperature: ' + (temp ? temp + ' C' : '___') + ', ';
+  output += 'Heart Rate: ' + (hr || '___') + ', ';
+  output += 'Blood Pressure: ' + (bp || '___') + ', ';
+  output += 'Respiratory Rate: ' + (rr || '___') + ', ';
+  output += 'SpO2: ' + (spo2 ? spo2 + '% on ' + o2 : '___') + '.\n';
 
   // Helper: render a complaint module section into text
   function renderModuleSection(findings) {
-    const abnormal = findings.filter(f => examFindings[f.id]);
-    const normal = findings.filter(f => !examFindings[f.id]);
+    // omit state = excluded from output entirely
+    const active = findings.filter(f => examFindings[f.id] !== 'omit');
+    const abnormal = active.filter(f => examFindings[f.id] === 'abnormal');
+    const normal = active.filter(f => examFindings[f.id] !== 'abnormal');
     let text = '';
     if (abnormal.length > 0) text += abnormal.map(f => f.abnormal).join('. ') + '. ';
     if (normal.length > 0) text += normal.map(f => f.normal).join('. ') + '.';
@@ -1822,7 +1850,7 @@ function generateOutput() {
   // GENERAL
   output += 'General: ' + (
     moduleSection('general') ||
-    `Patient is a ${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
+    `Patient is a ${agePrefix}${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
   ) + '\n';
 
   // HEAD (no module section covers this - always scaffold)
@@ -2033,6 +2061,7 @@ function resetAll() {
   setRosMode('focused');
 
   // Reset exam
+  document.getElementById('pt-age-num').value = '';
   document.getElementById('pt-age').value = 'adult';
   document.getElementById('pt-sex').value = 'male';
   document.getElementById('pt-build').value = 'well nourished, well developed';
@@ -2045,7 +2074,7 @@ function resetAll() {
   document.getElementById('v-o2').value = 'room air';
   document.getElementById('complaint-select').value = 'none';
   document.getElementById('complaint-module-container').innerHTML = '';
-  Object.keys(examFindings).forEach(k => { examFindings[k] = false; });
+  Object.keys(examFindings).forEach(k => { examFindings[k] = 'normal'; });
   synthesiEnabled = false;
   document.getElementById('toggle-synthesis').classList.remove('on');
 
