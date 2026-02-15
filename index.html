@@ -1064,6 +1064,14 @@
           <option value="sob">Shortness of Breath</option>
           <option value="abdo_pain">Abdominal Pain</option>
           <option value="back_pain">Back Pain</option>
+          <option value="syncope">Syncope / Loss of Consciousness</option>
+          <option value="headache">Headache</option>
+          <option value="ams">Altered Mental Status</option>
+          <option value="trauma">Trauma</option>
+          <option value="stroke">Stroke / Focal Neurological Deficit</option>
+          <option value="uro">Urinary Symptoms / Flank Pain</option>
+          <option value="palp">Palpitations</option>
+          <option value="anaphylaxis">Allergic Reaction / Anaphylaxis</option>
         </select>
       </div>
     </div>
@@ -1315,7 +1323,15 @@ function loadComplaintModule() {
     chest_pain: buildChestPainModule,
     sob: buildSOBModule,
     abdo_pain: buildAbdoPainModule,
-    back_pain: buildBackPainModule
+    back_pain: buildBackPainModule,
+    syncope: buildSyncopeModule,
+    headache: buildHeadacheModule,
+    ams: buildAMSModule,
+    trauma: buildTraumaModule,
+    stroke: buildStrokeModule,
+    uro: buildUroModule,
+    palp: buildPalpModule,
+    anaphylaxis: buildAnaphylaxisModule
   };
   if (modules[val]) modules[val](container);
   updateDot('dot-complaint-module', 'active');
@@ -1847,6 +1863,13 @@ function generateOutput() {
   // Order matters: first match wins for the primary label.
   // Multiple keys can contribute to the same output system.
 
+  // MECHANISM OF INJURY (trauma module only)
+  if (complaint === 'trauma') {
+    const mechEl = document.getElementById('tr-mechanism');
+    const mechVal = mechEl ? mechEl.value.trim() : '';
+    output += 'Mechanism of Injury: ' + (mechVal || '(not specified)') + '\n';
+  }
+
   // GENERAL
   output += 'General: ' + (
     moduleSection('general') ||
@@ -1874,10 +1897,13 @@ function generateOutput() {
   const respText = moduleSection('resp');
   output += 'Respiratory: ' + (respText || 'No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.') + '\n';
 
-  // CHEST WALL (only present in chest pain module - append after respiratory if present)
+  // CHEST WALL (chest pain module uses 'chest_wall'; trauma module uses 'chest')
   const chestWallText = moduleSection('chest_wall');
+  const chestTraumaText = moduleSection('chest');
   if (chestWallText) {
     output += 'Chest Wall: ' + chestWallText + '\n';
+  } else if (chestTraumaText) {
+    output += 'Chest / Chest Wall: ' + chestTraumaText + '\n';
   }
 
   // CARDIAC - inspection and auscultation may be separate sections
@@ -1917,8 +1943,21 @@ function generateOutput() {
   } else if (abdoText) {
     output += 'Abdomen: ' + abdoText + '\n';
     if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
+    if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
   } else if (!isBackPain) {
     output += 'Abdomen: Soft, non-tender, non-distended. No guarding or rebound.\n';
+  }
+
+  // GENITOURINARY (uro module) - output after abdomen block
+  const genitourinaryText = moduleSection('genitourinary');
+  if (genitourinaryText) {
+    output += 'Genitourinary: ' + genitourinaryText + '\n';
+  }
+
+  // Global CVA/Flank - for uro module (not back_pain, not abdo block already handled above)
+  if (!isBackPain && !abdoText && !abdoInspText) {
+    const globalCvaText = moduleSection('cva');
+    if (globalCvaText) output += 'CVA/Flank: ' + globalCvaText + '\n';
   }
 
   // BACK
@@ -1961,6 +2000,33 @@ function generateOutput() {
   const skinText = moduleSection('skin');
   output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
 
+  // MODULE-SPECIFIC ADDITIONAL SECTIONS
+  // Fundoscopy (headache module)
+  const fundoscopyText = moduleSection('fundoscopy');
+  if (fundoscopyText) output += 'Fundoscopy: ' + fundoscopyText + '\n';
+
+  // Orthostatic Assessment (syncope module)
+  const orthoText = moduleSection('ortho');
+  if (orthoText) output += 'Orthostatic Assessment: ' + orthoText + '\n';
+
+  // Thyroid (palpitations module)
+  const thyroidText = moduleSection('thyroid');
+  if (thyroidText) output += 'Thyroid: ' + thyroidText + '\n';
+
+  // Airway / Angioedema (anaphylaxis module)
+  const airwayText = moduleSection('airway');
+  if (airwayText) output += 'Airway / Angioedema: ' + airwayText + '\n';
+
+  // NIHSS sections (stroke module)
+  const nihssMotorText = moduleSection('nihss_motor');
+  const nihssSpeechText = moduleSection('nihss_speech');
+  const nihssSensationText = moduleSection('nihss_sensation');
+  const neuroOtherText = moduleSection('neuro_other');
+  if (nihssMotorText) output += 'Motor (NIHSS): ' + nihssMotorText + '\n';
+  if (nihssSpeechText) output += 'Speech and Language (NIHSS): ' + nihssSpeechText + '\n';
+  if (nihssSensationText) output += 'Sensation and Coordination (NIHSS): ' + nihssSensationText + '\n';
+  if (neuroOtherText) output += 'Neurological (Other): ' + neuroOtherText + '\n';
+
   // PSYCHIATRIC - no complaint module covers this, always scaffold
   output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
 
@@ -1977,7 +2043,20 @@ function generateOutput() {
 }
 
 function getComplaintLabel(key) {
-  const map = {chest_pain:'Chest Pain',sob:'Shortness of Breath',abdo_pain:'Abdominal Pain',back_pain:'Back Pain'};
+  const map = {
+    chest_pain:'Chest Pain',
+    sob:'Shortness of Breath',
+    abdo_pain:'Abdominal Pain',
+    back_pain:'Back Pain',
+    syncope:'Syncope / Loss of Consciousness',
+    headache:'Headache',
+    ams:'Altered Mental Status',
+    trauma:'Trauma',
+    stroke:'Stroke / Focal Neurological Deficit',
+    uro:'Urinary Symptoms / Flank Pain',
+    palp:'Palpitations',
+    anaphylaxis:'Allergic Reaction / Anaphylaxis'
+  };
   return map[key] || key;
 }
 
@@ -1989,7 +2068,13 @@ function formatSectionLabel(key) {
     palpation:'Palpation', organomegaly:'Organomegaly/Masses', percussion:'Percussion', hernias:'Hernias',
     cva:'CVA/Flank', rectal:'Rectal', cardiac:'Cardiovascular', rom:'Range of Motion',
     neuro_lower:'Lower Limb Neurological', radicular:'Radicular Provocation', hip:'Hip/SI Screening',
-    cauda:'Cauda Equina Screen', vascular:'Peripheral Vascular/DVT', si:'SI Joints'
+    cauda:'Cauda Equina Screen', vascular:'Peripheral Vascular/DVT', si:'SI Joints',
+    ortho:'Orthostatic Assessment', fundoscopy:'Fundoscopy', meningismus:'Meningismus',
+    mechanism:'Mechanism', chest:'Chest / Chest Wall', thyroid:'Thyroid',
+    airway:'Airway / Angioedema', genitourinary:'Genitourinary',
+    nihss_motor:'Motor (NIHSS)', nihss_speech:'Speech and Language (NIHSS)',
+    nihss_sensation:'Sensation and Coordination (NIHSS)', neuro_other:'Neurological (Other)',
+    flank:'CVA / Flank', scrotal:'Genitourinary'
   };
   return map[key] || key.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 }
@@ -2022,6 +2107,61 @@ Fracture / instability: No focal bony tenderness, no stepoff or deformity.
 Infection / malignancy: No fever or systemic toxicity, no focal bony percussion tenderness.
 Cord compression: No upper motor neuron signs, no clonus, Hoffmann absent, plantar responses downgoing.
 AAA / visceral: No pulsatile abdominal mass, no bruit, no CVA tenderness.
+Abnormalities noted above addressed in MDM.`,
+    syncope: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Cardiac aetiology: No murmur, no signs of heart failure, no arrhythmia on monitor, no haemodynamic instability.
+Structural heart disease: No new murmur, no S3 or S4 gallop, JVP normal.
+Aortic dissection: No inter-arm BP difference, no pulse deficit, no focal neurological deficit.
+Neurological cause: No focal deficit, no signs of raised ICP, no seizure activity observed.
+Orthostatic: Documented in orthostatic assessment section above.
+Abnormalities noted above addressed in MDM.`,
+    headache: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Meningitis / SAH: No meningismus, Kernig and Brudzinski signs negative, no petechial rash.
+Raised ICP: No papilloedema, venous pulsations present, no focal neurological deficit.
+Temporal arteritis: Temporal arteries soft, non-tender, pulsatile bilaterally.
+Hypertensive emergency: Blood pressure documented in vitals; no hypertensive end-organ signs on exam.
+Intracranial mass: No focal deficit, no ataxia, no signs of herniation.
+Abnormalities noted above addressed in MDM.`,
+    ams: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+CNS infection: No meningismus, no fever on exam, no petechial rash.
+Structural lesion / stroke: No focal neurological deficit, no signs of herniation.
+Toxic / metabolic: No signs of specific toxidrome; GCS and orientation documented above.
+Hypoglycaemia: Point-of-care glucose documented in vitals.
+Status epilepticus: No witnessed seizure activity, no post-ictal signs.
+Abnormalities noted above addressed in MDM.`,
+    trauma: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Haemodynamic instability: Vital signs documented; no signs of haemorrhagic shock on exam.
+Tension pneumothorax: Trachea midline, no absent unilateral breath sounds, no tracheal deviation.
+Traumatic brain injury: GCS and orientation documented; no focal deficit, no Cushing triad.
+Cervical spine injury: C-spine assessment documented; clinical clearance criteria applied per protocol.
+Intra-abdominal injury: No peritoneal signs, no flank ecchymosis (Grey Turner), no pelvic instability.
+Abnormalities noted above addressed in MDM.`,
+    stroke: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Haemorrhagic transformation: BP documented in vitals; no Cushing triad signs on exam.
+Herniation: No Cushing triad, no blown pupil, no decorticate or decerebrate posturing.
+Hypoglycaemia: Point-of-care glucose documented.
+Endovascular candidacy: NIHSS components documented above; last known well and symptom onset in MDM.
+Posterior circulation: No nystagmus, no ataxia, no cranial nerve findings unless documented above.
+Abnormalities noted above addressed in MDM.`,
+    uro: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+AAA / vascular: No pulsatile abdominal mass, no epigastric bruit.
+Testicular torsion: Cremasteric reflex present bilaterally, no high-riding testis, no scrotal erythema unless documented.
+Pyelonephritis with sepsis: Vital signs documented; no haemodynamic instability signs on exam.
+Urinary retention: Bladder not palpable unless documented.
+Ectopic pregnancy: If applicable, pelvic exam findings documented; BHCG in MDM.
+Abnormalities noted above addressed in MDM.`,
+    palp: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Haemodynamic compromise: Vital signs documented; no pre-syncope, no hypotension signs on exam.
+Structural heart disease: No murmur, no signs of heart failure, JVP normal.
+Thyroid storm: No thyroid bruit, no goitre, no exophthalmos unless documented.
+WPW / accessory pathway: ECG findings documented in MDM.
+Abnormalities noted above addressed in MDM.`,
+    anaphylaxis: `EXAM SYNTHESIS - RED FLAG CUES (absent unless otherwise documented above):
+Airway compromise: No stridor, no hoarseness, no angioedema of tongue or supraglottis unless documented.
+Haemodynamic instability: Vital signs documented; no persistent hypotension on exam.
+Bronchospasm: No audible wheeze at rest unless documented; oxygen saturation documented.
+Progression of reaction: Skin, airway, and cardiovascular systems reassessed and documented above.
+Biphasic anaphylaxis risk: Observation plan and discharge criteria addressed in MDM.
 Abnormalities noted above addressed in MDM.`,
     none: ''
   };
@@ -2081,6 +2221,543 @@ function resetAll() {
   // Reset output
   document.getElementById('output-area').textContent = 'Tap Generate Note to build your output.';
   showToast('All fields reset');
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+// ============================================================
+// NEW COMPLAINT MODULE BUILDERS
+// ============================================================
+
+function buildModuleHTML(moduleKey, title, sectionDefs) {
+  let html = `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>${title}</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to cycle: ABNORMAL (orange) then OMIT (strikethrough).</div>`;
+  sectionDefs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData[moduleKey][s.key].forEach(f => {
+      examFindings[f.id] = 'normal';
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('${moduleKey}','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// --- SYNCOPE / LOC ---
+function buildSyncopeModule(container) {
+  window.examData = window.examData || {};
+  window.examData.syncope = {
+    general: [
+      {id:'syn_gen', normal:'Alert, oriented, no ongoing altered mentation', abnormal:'Persistent confusion or obtundation'},
+      {id:'syn_distress', normal:'No acute distress, comfortable at rest', abnormal:'Appears distressed or unwell'}
+    ],
+    heent: [
+      {id:'syn_tongue', normal:'No tongue laceration or bite injury', abnormal:'Tongue laceration present, consistent with seizure'},
+      {id:'syn_head', normal:'No head trauma, no scalp lacerations or haematoma', abnormal:'Scalp laceration or haematoma present at ___'},
+      {id:'syn_pupils', normal:'Pupils equal, round, and reactive to light bilaterally', abnormal:'Pupils unequal or poorly reactive'},
+      {id:'syn_mm', normal:'Mucous membranes moist', abnormal:'Mucous membranes dry, consistent with dehydration'}
+    ],
+    neck: [
+      {id:'syn_neck_tender', normal:'No midline cervical tenderness', abnormal:'Midline cervical tenderness, C-spine clearance required'},
+      {id:'syn_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'},
+      {id:'syn_carotids', normal:'Carotids without bruits', abnormal:'Carotid bruit present on ___'}
+    ],
+    cardiac: [
+      {id:'syn_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm'},
+      {id:'syn_s1s2', normal:'S1, S2 normal', abnormal:'Abnormal heart sounds'},
+      {id:'syn_murmur', normal:'No murmurs, rubs, or gallops', abnormal:'Murmur audible - aortic stenosis excluded clinically?'},
+      {id:'syn_s4', normal:'No S4', abnormal:'S4 present'}
+    ],
+    resp: [
+      {id:'syn_wob', normal:'Work of breathing normal, no accessory muscle use', abnormal:'Increased work of breathing'},
+      {id:'syn_bs', normal:'Breath sounds clear bilaterally', abnormal:'Abnormal breath sounds'}
+    ],
+    neuro: [
+      {id:'syn_orient', normal:'Oriented to person, place, time, and situation', abnormal:'Disoriented to ___'},
+      {id:'syn_speech', normal:'Speech fluent and coherent', abnormal:'Dysarthria or dysphasia present'},
+      {id:'syn_motor', normal:'Motor strength equal bilaterally in all four limbs', abnormal:'Focal motor deficit in ___'},
+      {id:'syn_coord', normal:'Finger-nose test normal, no ataxia', abnormal:'Ataxia or dysmetria present'},
+      {id:'syn_gait', normal:'Gait normal and steady', abnormal:'Gait abnormal or ataxic'},
+      {id:'syn_postic', normal:'No post-ictal features, no Todd paralysis', abnormal:'Post-ictal confusion or Todd paralysis present'}
+    ],
+    extremities: [
+      {id:'syn_pulses', normal:'Peripheral pulses 2+ and symmetric', abnormal:'Pulses diminished on ___'},
+      {id:'syn_trauma', normal:'No extremity trauma, lacerations, or deformity from fall', abnormal:'Injury from fall: ___'},
+      {id:'syn_capref', normal:'Capillary refill less than 2 seconds', abnormal:'Capillary refill greater than 2 seconds'}
+    ],
+    skin: [
+      {id:'syn_pallor', normal:'No pallor or diaphoresis', abnormal:'Pallor and diaphoresis present'},
+      {id:'syn_cyanosis', normal:'No central or peripheral cyanosis', abnormal:'Cyanosis present'}
+    ],
+    ortho: [
+      {id:'syn_ortho_hr', normal:'Heart rate does not increase greater than 30 bpm on standing', abnormal:'Heart rate increases greater than 30 bpm on standing, orthostatic tachycardia'},
+      {id:'syn_ortho_bp', normal:'Blood pressure does not drop significantly on standing', abnormal:'Systolic BP drops greater than 20 mmHg on standing, orthostatic hypotension'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'heent',title:'HEENT'},
+    {key:'neck',title:'Neck'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'resp',title:'Respiratory'},
+    {key:'neuro',title:'Neurological'},
+    {key:'extremities',title:'Extremities'},
+    {key:'skin',title:'Skin'},
+    {key:'ortho',title:'Orthostatic Assessment'}
+  ];
+  container.innerHTML = buildModuleHTML('syncope', 'Syncope / LOC Exam Findings', secs);
+}
+
+// --- HEADACHE ---
+function buildHeadacheModule(container) {
+  window.examData = window.examData || {};
+  window.examData.headache = {
+    general: [
+      {id:'ha_gen', normal:'Alert, oriented, comfortable, in no acute distress', abnormal:'Ill-appearing, in distress'},
+      {id:'ha_photo', normal:'No photophobia or phonophobia observed', abnormal:'Photophobia or phonophobia present'}
+    ],
+    heent: [
+      {id:'ha_pupils', normal:'Pupils equal, round, reactive to light bilaterally, no anisocoria', abnormal:'Anisocoria or pupillary asymmetry present'},
+      {id:'ha_eom', normal:'Extraocular movements intact, no nystagmus', abnormal:'Restricted EOM or nystagmus present'},
+      {id:'ha_fundi', normal:'Fundoscopy deferred or disc margins sharp bilaterally', abnormal:'Papilloedema present'},
+      {id:'ha_ptosis', normal:'No ptosis or lid droop', abnormal:'Ptosis present on ___'},
+      {id:'ha_face', normal:'Face symmetric, no tenderness over sinuses or temporal arteries', abnormal:'Tenderness over ___ sinuses or temporal artery'},
+      {id:'ha_ta', normal:'Temporal arteries soft, non-tender, pulsatile bilaterally', abnormal:'Temporal artery tender or cord-like on ___'}
+    ],
+    neck: [
+      {id:'ha_meningismus', normal:'No meningismus, neck supple with full range of motion', abnormal:'Meningismus present, neck stiffness on flexion'},
+      {id:'ha_kernig', normal:'Kernig sign negative', abnormal:'Kernig sign positive'},
+      {id:'ha_brudzinski', normal:'Brudzinski sign negative', abnormal:'Brudzinski sign positive'},
+      {id:'ha_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'}
+    ],
+    neuro: [
+      {id:'ha_orient', normal:'Oriented to person, place, time, and situation', abnormal:'Disoriented to ___'},
+      {id:'ha_speech', normal:'Speech fluent, no dysphasia or dysarthria', abnormal:'Dysphasia or dysarthria present'},
+      {id:'ha_motor', normal:'Motor strength 5/5 bilaterally in all four limbs', abnormal:'Motor deficit in ___'},
+      {id:'ha_sensation', normal:'Sensation intact throughout', abnormal:'Sensory deficit in ___'},
+      {id:'ha_coord', normal:'Coordination normal, finger-nose test intact', abnormal:'Coordination abnormal'},
+      {id:'ha_facial', normal:'No facial asymmetry or cranial nerve deficit', abnormal:'Facial asymmetry or cranial nerve deficit present'},
+      {id:'ha_gait', normal:'Gait normal and steady', abnormal:'Gait ataxic or unstable'}
+    ],
+    fundoscopy: [
+      {id:'ha_venous', normal:'Venous pulsations present bilaterally', abnormal:'Venous pulsations absent, raised ICP possible'}
+    ],
+    skin: [
+      {id:'ha_rash', normal:'No petechial or purpuric rash', abnormal:'Petechial or purpuric rash present, meningococcal disease excluded?'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'heent',title:'HEENT / Eyes'},
+    {key:'neck',title:'Neck / Meningismus'},
+    {key:'neuro',title:'Neurological'},
+    {key:'fundoscopy',title:'Fundoscopy'},
+    {key:'skin',title:'Skin'}
+  ];
+  container.innerHTML = buildModuleHTML('headache', 'Headache Exam Findings', secs);
+}
+
+// --- ALTERED MENTAL STATUS ---
+function buildAMSModule(container) {
+  window.examData = window.examData || {};
+  window.examData.ams = {
+    general: [
+      {id:'ams_gen', normal:'Awake and rousable, responds to voice', abnormal:'Responds only to pain or unresponsive'},
+      {id:'ams_distress', normal:'No acute distress observed', abnormal:'Agitated, combative, or diaphoretic'}
+    ],
+    heent: [
+      {id:'ams_pupils', normal:'Pupils equal, round, and reactive bilaterally', abnormal:'Pupils abnormal: ___'},
+      {id:'ams_eom', normal:'Eyes open spontaneously, conjugate gaze, no nystagmus', abnormal:'Gaze deviation or nystagmus present'},
+      {id:'ams_fundi', normal:'Fundoscopy deferred or no papilloedema', abnormal:'Papilloedema present'},
+      {id:'ams_mm', normal:'Mucous membranes moist', abnormal:'Mucous membranes dry'},
+      {id:'ams_tongue', normal:'No tongue laceration or bite injury', abnormal:'Tongue laceration, consistent with seizure'},
+      {id:'ams_icterus', normal:'No scleral icterus', abnormal:'Scleral icterus present'}
+    ],
+    neck: [
+      {id:'ams_meningismus', normal:'Neck supple, no meningismus', abnormal:'Neck stiffness or meningismus present'},
+      {id:'ams_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'}
+    ],
+    cardiac: [
+      {id:'ams_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm'},
+      {id:'ams_murmur', normal:'No murmurs, rubs, or gallops', abnormal:'Murmur audible'}
+    ],
+    resp: [
+      {id:'ams_wob', normal:'Respirations regular, unlaboured, airway patent', abnormal:'Airway compromise or irregular respirations'},
+      {id:'ams_bs', normal:'Breath sounds clear bilaterally', abnormal:'Abnormal breath sounds'}
+    ],
+    abdomen: [
+      {id:'ams_abd', normal:'Abdomen soft, nontender, nondistended, no organomegaly', abnormal:'Abdominal tenderness or organomegaly present'},
+      {id:'ams_liver', normal:'Liver edge not palpable', abnormal:'Hepatomegaly noted, ___ cm below costal margin'}
+    ],
+    neuro: [
+      {id:'ams_gcs', normal:'GCS assessed and documented separately', abnormal:'GCS impaired - see documentation'},
+      {id:'ams_orient', normal:'Oriented to person', abnormal:'Disoriented to person'},
+      {id:'ams_place', normal:'Oriented to place', abnormal:'Disoriented to place'},
+      {id:'ams_time', normal:'Oriented to time', abnormal:'Disoriented to time'},
+      {id:'ams_commands', normal:'Follows two-step commands', abnormal:'Unable to follow commands'},
+      {id:'ams_speech', normal:'Speech intelligible, no obvious aphasia', abnormal:'Aphasia or dysarthria present'},
+      {id:'ams_motor', normal:'Motor strength equal bilaterally, moves all four limbs', abnormal:'Focal motor deficit in ___'},
+      {id:'ams_plantar', normal:'Plantar responses flexor bilaterally', abnormal:'Extensor plantar response (Babinski) on ___'},
+      {id:'ams_asterixis', normal:'No asterixis', abnormal:'Asterixis present, hepatic or metabolic encephalopathy?'},
+      {id:'ams_tremor', normal:'No tremor at rest or with action', abnormal:'Tremor present'},
+      {id:'ams_postic', normal:'No post-ictal features', abnormal:'Post-ictal state suspected'}
+    ],
+    skin: [
+      {id:'ams_diaphor', normal:'No diaphoresis', abnormal:'Diaphoresis present'},
+      {id:'ams_pallor', normal:'No pallor, jaundice, or mottling', abnormal:'Jaundice or mottling present'},
+      {id:'ams_rash', normal:'No petechiae, purpura, or abnormal rash', abnormal:'Petechial or purpuric rash present'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General / Level of Consciousness'},
+    {key:'heent',title:'HEENT'},
+    {key:'neck',title:'Neck'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'resp',title:'Respiratory'},
+    {key:'abdomen',title:'Abdomen'},
+    {key:'neuro',title:'Neurological'},
+    {key:'skin',title:'Skin'}
+  ];
+  container.innerHTML = buildModuleHTML('ams', 'Altered Mental Status Exam Findings', secs);
+}
+
+// --- TRAUMA ---
+function buildTraumaModule(container) {
+  window.examData = window.examData || {};
+  window.examData.trauma = {
+    mechanism: [],
+    general: [
+      {id:'tr_gen', normal:'Alert, oriented, cooperative, moving all limbs', abnormal:'Altered mentation or impaired cooperation'},
+      {id:'tr_distress', normal:'No acute distress at rest', abnormal:'Appears in pain or acute distress'}
+    ],
+    heent: [
+      {id:'tr_scalp', normal:'No scalp lacerations, haematomas, or skull deformity', abnormal:'Scalp laceration or deformity at ___'},
+      {id:'tr_face', normal:'Midface stable to palpation, no facial fracture deformity', abnormal:'Facial tenderness or deformity at ___'},
+      {id:'tr_eyes', normal:'Periorbital region intact, no Battle sign, no raccoon eyes', abnormal:'Periorbital ecchymosis or Battle sign present'},
+      {id:'tr_pupils', normal:'Pupils equal, round, reactive bilaterally', abnormal:'Pupils unequal or poorly reactive'},
+      {id:'tr_hemotympanum', normal:'TMs intact bilaterally, no haemotympanum', abnormal:'Haemotympanum present on ___'},
+      {id:'tr_nose', normal:'Nose intact, no septal deviation or haematoma', abnormal:'Nasal deformity or septal haematoma present'},
+      {id:'tr_mandible', normal:'Mandible intact, dentition intact, no trismus', abnormal:'Mandibular tenderness or trismus present'},
+      {id:'tr_mm', normal:'Mucous membranes moist, oropharynx clear', abnormal:'Oropharyngeal blood or injury present'}
+    ],
+    neck: [
+      {id:'tr_c_spine', normal:'No midline cervical spine tenderness, no step-off', abnormal:'Midline C-spine tenderness at ___'},
+      {id:'tr_para_tender', normal:'No paraspinal tenderness', abnormal:'Paraspinal tenderness present'},
+      {id:'tr_trachea', normal:'Trachea midline, no subcutaneous emphysema', abnormal:'Tracheal deviation or subcutaneous emphysema present'},
+      {id:'tr_jvp', normal:'JVP not elevated, no venous distension', abnormal:'JVP elevated'}
+    ],
+    chest: [
+      {id:'tr_cw_inspect', normal:'Chest wall symmetric, no visible deformity or paradoxical movement', abnormal:'Chest wall deformity or flail segment'},
+      {id:'tr_cw_palp', normal:'No chest wall tenderness, no crepitus, no rib tenderness', abnormal:'Rib tenderness or crepitus at ___'},
+      {id:'tr_bs', normal:'Breath sounds equal and clear bilaterally', abnormal:'Decreased or absent breath sounds at ___'},
+      {id:'tr_expansion', normal:'Chest expansion symmetric', abnormal:'Asymmetric chest expansion'},
+      {id:'tr_sc_emphysema', normal:'No subcutaneous emphysema on chest wall', abnormal:'Subcutaneous emphysema on chest wall'}
+    ],
+    cardiac: [
+      {id:'tr_heart', normal:'Regular rate and rhythm, no muffled heart sounds', abnormal:'Muffled or distant heart sounds - tamponade?'},
+      {id:'tr_murmur', normal:'No new murmurs audible', abnormal:'Murmur audible'}
+    ],
+    abdomen: [
+      {id:'tr_abd_inspect', normal:'Abdomen flat, no ecchymosis, no seatbelt sign', abnormal:'Seatbelt sign or abdominal wall ecchymosis present'},
+      {id:'tr_abd_tender', normal:'Abdomen soft, nontender to palpation throughout', abnormal:'Abdominal tenderness in ___'},
+      {id:'tr_abd_guard', normal:'No guarding or rebound tenderness', abnormal:'Guarding or rebound present'},
+      {id:'tr_pelvis', normal:'Pelvis stable to AP and lateral compression', abnormal:'Pelvic instability on compression - pelvic fracture?'}
+    ],
+    back: [
+      {id:'tr_t_spine', normal:'No midline thoracic or lumbar spine tenderness', abnormal:'Midline thoracic or lumbar tenderness at ___'},
+      {id:'tr_flank', normal:'No flank ecchymosis or tenderness', abnormal:'Flank ecchymosis or tenderness present'}
+    ],
+    extremities: [
+      {id:'tr_ue_l', normal:'Left upper extremity: no deformity, full range of motion', abnormal:'Left upper extremity injury: ___'},
+      {id:'tr_ue_r', normal:'Right upper extremity: no deformity, full range of motion', abnormal:'Right upper extremity injury: ___'},
+      {id:'tr_le_l', normal:'Left lower extremity: no deformity, full range of motion', abnormal:'Left lower extremity injury: ___'},
+      {id:'tr_le_r', normal:'Right lower extremity: no deformity, full range of motion', abnormal:'Right lower extremity injury: ___'},
+      {id:'tr_pulses', normal:'Peripheral pulses 2+ and symmetric bilaterally', abnormal:'Pulses diminished distal to injury on ___'},
+      {id:'tr_capref', normal:'Capillary refill less than 2 seconds in all limbs', abnormal:'Capillary refill prolonged in ___'}
+    ],
+    neuro: [
+      {id:'tr_neuro', normal:'Alert and oriented x3, motor and sensation intact in all four limbs', abnormal:'Focal neurological deficit: ___'},
+      {id:'tr_gcs', normal:'GCS 15', abnormal:'GCS impaired, documented separately'}
+    ],
+    skin: [
+      {id:'tr_lacerations', normal:'No lacerations requiring closure', abnormal:'Laceration(s) at ___ requiring closure'},
+      {id:'tr_abrasions', normal:'Minor abrasions noted and cleaned', abnormal:'Significant abrasions at ___'},
+      {id:'tr_diaphor', normal:'No diaphoresis or pallor', abnormal:'Diaphoresis and pallor, haemorrhagic shock?'}
+    ]
+  };
+
+  // Mechanism dropdown at top, then exam sections
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'heent',title:'HEENT / Head'},
+    {key:'neck',title:'Neck / C-Spine'},
+    {key:'chest',title:'Chest / Chest Wall'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'abdomen',title:'Abdomen / Pelvis'},
+    {key:'back',title:'Back / T-Spine / L-Spine'},
+    {key:'extremities',title:'Extremities'},
+    {key:'neuro',title:'Neurological'},
+    {key:'skin',title:'Skin / Wounds'}
+  ];
+
+  let html = `<div class="section">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-title"><div class="section-dot active"></div>Trauma Exam Findings</div>
+      <span class="chevron" style="transform:rotate(180deg)">▼</span>
+    </div>
+    <div class="section-body open">
+    <div class="field-group" style="margin-bottom:12px;">
+      <div class="field-label">Mechanism of Injury</div>
+      <select id="tr-mechanism">
+        <option value="">-- Select mechanism --</option>
+        <option value="MVC driver">MVC (driver)</option>
+        <option value="MVC passenger">MVC (passenger)</option>
+        <option value="MVC pedestrian struck">Pedestrian struck by vehicle</option>
+        <option value="MVC cyclist struck">Cyclist struck by vehicle</option>
+        <option value="fall from standing">Fall from standing</option>
+        <option value="fall from height">Fall from height</option>
+        <option value="assault, blunt">Assault (blunt)</option>
+        <option value="assault, penetrating">Assault (penetrating - stab)</option>
+        <option value="assault, penetrating gunshot">Assault (penetrating - gunshot)</option>
+        <option value="sports injury">Sports injury</option>
+        <option value="industrial or machinery injury">Industrial or machinery injury</option>
+        <option value="other mechanism">Other mechanism (specify in output)</option>
+      </select>
+    </div>
+    <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to cycle: ABNORMAL (orange) then OMIT (strikethrough).</div>`;
+
+  secs.forEach(s => {
+    html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
+    window.examData.trauma[s.key].forEach(f => {
+      examFindings[f.id] = 'normal';
+      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('trauma','${s.key}','${f.id}',this)">
+        <div class="fi-dot"></div>
+        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+// --- STROKE / FOCAL NEURO ---
+function buildStrokeModule(container) {
+  window.examData = window.examData || {};
+  window.examData.stroke = {
+    general: [
+      {id:'str_gen', normal:'Alert, cooperative, appears stated age', abnormal:'Altered mentation or uncooperative'},
+      {id:'str_distress', normal:'No acute distress', abnormal:'Appears acutely unwell or distressed'}
+    ],
+    heent: [
+      {id:'str_pupils', normal:'Pupils equal, round, reactive bilaterally, no anisocoria', abnormal:'Anisocoria present: R ___ L ___'},
+      {id:'str_gaze', normal:'Eyes open symmetrically, conjugate gaze, no gaze preference', abnormal:'Gaze preference or forced gaze deviation to ___'},
+      {id:'str_eom', normal:'Extraocular movements intact, no nystagmus', abnormal:'Restricted EOM or nystagmus present'},
+      {id:'str_face', normal:'Face symmetric at rest and with movement', abnormal:'Facial asymmetry present - droop on ___'},
+      {id:'str_vision', normal:'Visual fields grossly intact to confrontation bilaterally', abnormal:'Visual field deficit: ___'}
+    ],
+    neck: [
+      {id:'str_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'},
+      {id:'str_carotids', normal:'Carotids without bruits bilaterally', abnormal:'Carotid bruit present on ___'},
+      {id:'str_neck_supple', normal:'Neck supple, no meningismus', abnormal:'Neck stiffness present'}
+    ],
+    cardiac: [
+      {id:'str_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm, AF as cardioembolic source?'},
+      {id:'str_murmur', normal:'No murmurs, rubs, or gallops', abnormal:'Murmur audible - valvular disease?'}
+    ],
+    nihss_motor: [
+      {id:'str_ue_l', normal:'Left upper extremity: strength 5/5, no drift', abnormal:'Left arm drift or weakness, strength ___/5'},
+      {id:'str_ue_r', normal:'Right upper extremity: strength 5/5, no drift', abnormal:'Right arm drift or weakness, strength ___/5'},
+      {id:'str_le_l', normal:'Left lower extremity: strength 5/5', abnormal:'Left leg weakness, strength ___/5'},
+      {id:'str_le_r', normal:'Right lower extremity: strength 5/5', abnormal:'Right leg weakness, strength ___/5'}
+    ],
+    nihss_speech: [
+      {id:'str_dysphasia', normal:'Language intact, names objects and reads without error', abnormal:'Aphasia present - expressive or receptive'},
+      {id:'str_dysarthria', normal:'Speech clear and fluent, no dysarthria', abnormal:'Dysarthria present, speech slurred'},
+      {id:'str_neglect', normal:'No hemispatial neglect, attends to both sides', abnormal:'Hemispatial neglect present on ___'}
+    ],
+    nihss_sensation: [
+      {id:'str_sensation', normal:'Sensation intact bilaterally to light touch and pin', abnormal:'Hemisensory deficit on ___'},
+      {id:'str_ataxia', normal:'Limb ataxia absent, finger-nose intact bilaterally', abnormal:'Limb ataxia present in ___'}
+    ],
+    neuro_other: [
+      {id:'str_plantar', normal:'Plantar responses flexor bilaterally', abnormal:'Extensor plantar response (Babinski) on ___'},
+      {id:'str_pronator', normal:'No pronator drift bilaterally', abnormal:'Pronator drift on ___'},
+      {id:'str_gait', normal:'Gait normal and steady', abnormal:'Gait ataxic, hemiplegic, or unable to assess'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'heent',title:'HEENT / Eyes / Face'},
+    {key:'neck',title:'Neck'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'nihss_motor',title:'Motor (NIHSS)'},
+    {key:'nihss_speech',title:'Speech and Language (NIHSS)'},
+    {key:'nihss_sensation',title:'Sensation and Coordination (NIHSS)'},
+    {key:'neuro_other',title:'Other Neurological'}
+  ];
+  container.innerHTML = buildModuleHTML('stroke', 'Stroke / Focal Neuro Exam Findings', secs);
+}
+
+// --- URINARY / FLANK PAIN ---
+function buildUroModule(container) {
+  window.examData = window.examData || {};
+  window.examData.uro = {
+    general: [
+      {id:'uro_gen', normal:'Alert, oriented, in no acute distress', abnormal:'In significant pain or acute distress'},
+      {id:'uro_appear', normal:'Comfortable at rest, no restlessness', abnormal:'Writhing or restless with pain, consistent with renal colic'}
+    ],
+    abdomen: [
+      {id:'uro_abd_inspect', normal:'Abdomen flat, no distension or scars', abnormal:'Abdomen distended or surgical scars noted'},
+      {id:'uro_abd_soft', normal:'Abdomen soft, nondistended', abnormal:'Abdomen rigid or distended'},
+      {id:'uro_abd_tender', normal:'No abdominal tenderness in all quadrants', abnormal:'Abdominal tenderness in ___'},
+      {id:'uro_abd_guard', normal:'No guarding or rebound tenderness', abnormal:'Guarding or rebound present'},
+      {id:'uro_aorta', normal:'No pulsatile epigastric mass, no bruit', abnormal:'Pulsatile mass or bruit noted, AAA excluded?'},
+      {id:'uro_bladder', normal:'Bladder not palpable', abnormal:'Bladder palpable suprapubically, urinary retention?'},
+      {id:'uro_suprapubic', normal:'No suprapubic tenderness', abnormal:'Suprapubic tenderness present'}
+    ],
+    cva: [
+      {id:'uro_cva_r', normal:'Right CVA non-tender', abnormal:'Right CVA tenderness present'},
+      {id:'uro_cva_l', normal:'Left CVA non-tender', abnormal:'Left CVA tenderness present'},
+      {id:'uro_flank', normal:'No flank tenderness bilaterally', abnormal:'Flank tenderness on ___'}
+    ],
+    genitourinary: [
+      {id:'uro_ext_genitalia', normal:'External genitalia normal in appearance, no discharge', abnormal:'Genital abnormality: ___'},
+      {id:'uro_scrotal', normal:'No scrotal swelling, tenderness, or erythema', abnormal:'Scrotal tenderness or swelling present - torsion excluded?'},
+      {id:'uro_cremasteric', normal:'Cremasteric reflex present bilaterally', abnormal:'Cremasteric reflex absent on ___, testicular torsion?'}
+    ],
+    rectal: [
+      {id:'uro_prostate', normal:'Prostate exam deferred or normal size, non-tender', abnormal:'Prostate tender or enlarged on exam'}
+    ],
+    skin: [
+      {id:'uro_diaphor', normal:'No diaphoresis or pallor', abnormal:'Diaphoresis or pallor present'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'abdomen',title:'Abdomen'},
+    {key:'cva',title:'CVA / Flank'},
+    {key:'genitourinary',title:'Genitourinary'},
+    {key:'rectal',title:'Rectal / Prostate'},
+    {key:'skin',title:'Skin'}
+  ];
+  container.innerHTML = buildModuleHTML('uro', 'Urinary / Flank Pain Exam Findings', secs);
+}
+
+// --- PALPITATIONS ---
+function buildPalpModule(container) {
+  window.examData = window.examData || {};
+  window.examData.palp = {
+    general: [
+      {id:'palp_gen', normal:'Alert, oriented, comfortable at rest, no ongoing palpitations', abnormal:'Ongoing palpitations or presyncope at rest'},
+      {id:'palp_distress', normal:'No acute distress', abnormal:'Appears unwell or in distress'}
+    ],
+    heent: [
+      {id:'palp_thyroid', normal:'No visible thyroid enlargement or neck pulsations', abnormal:'Visible thyroid mass or neck pulsations'},
+      {id:'palp_mm', normal:'Mucous membranes moist', abnormal:'Mucous membranes dry'}
+    ],
+    cardiac: [
+      {id:'palp_rhythm', normal:'Regular rate and rhythm on auscultation', abnormal:'Irregular rhythm on auscultation'},
+      {id:'palp_rate', normal:'Heart rate regular, rate within normal limits', abnormal:'Heart rate abnormal: ___'},
+      {id:'palp_s1s2', normal:'S1, S2 normal', abnormal:'Abnormal heart sounds'},
+      {id:'palp_murmur', normal:'No murmurs, rubs, or gallops', abnormal:'Murmur audible'},
+      {id:'palp_s3', normal:'No S3', abnormal:'S3 present'},
+      {id:'palp_heave', normal:'No precordial heave or thrill', abnormal:'Heave or thrill present'},
+      {id:'palp_jvp', normal:'JVP not elevated', abnormal:'JVP elevated'}
+    ],
+    resp: [
+      {id:'palp_wob', normal:'Work of breathing normal', abnormal:'Increased work of breathing'},
+      {id:'palp_bs', normal:'Breath sounds clear bilaterally, no crackles', abnormal:'Crackles or wheeze present'}
+    ],
+    thyroid: [
+      {id:'palp_thyroid_palp', normal:'Thyroid gland not enlarged, no nodules palpable, non-tender', abnormal:'Thyroid enlarged, nodular, or tender'},
+      {id:'palp_lid_lag', normal:'No lid lag or exophthalmos', abnormal:'Lid lag or exophthalmos present'}
+    ],
+    extremities: [
+      {id:'palp_pulses', normal:'Peripheral pulses 2+ and symmetric', abnormal:'Pulses diminished or unequal'},
+      {id:'palp_edema', normal:'No peripheral oedema', abnormal:'Peripheral oedema present'},
+      {id:'palp_capref', normal:'Capillary refill less than 2 seconds', abnormal:'Capillary refill greater than 2 seconds'},
+      {id:'palp_tremor', normal:'No resting or intention tremor', abnormal:'Fine tremor present, thyrotoxicosis?'}
+    ],
+    skin: [
+      {id:'palp_diaphor', normal:'No diaphoresis or pallor', abnormal:'Diaphoresis present'},
+      {id:'palp_skin_warm', normal:'Skin warm and dry', abnormal:'Skin warm and moist, hyperadrenergic state?'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'heent',title:'HEENT'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'resp',title:'Respiratory'},
+    {key:'thyroid',title:'Thyroid'},
+    {key:'extremities',title:'Extremities'},
+    {key:'skin',title:'Skin'}
+  ];
+  container.innerHTML = buildModuleHTML('palp', 'Palpitations Exam Findings', secs);
+}
+
+// --- ALLERGIC REACTION / ANAPHYLAXIS ---
+function buildAnaphylaxisModule(container) {
+  window.examData = window.examData || {};
+  window.examData.anaphylaxis = {
+    general: [
+      {id:'ana_gen', normal:'Alert, oriented, speaking in full sentences', abnormal:'Altered mentation, hoarse, or unable to speak in full sentences'},
+      {id:'ana_distress', normal:'No acute distress', abnormal:'Appears in acute distress or severe anxiety'}
+    ],
+    airway: [
+      {id:'ana_voice', normal:'Voice clear and normal quality', abnormal:'Voice hoarse, high-pitched, or stridulous'},
+      {id:'ana_stridor', normal:'No audible stridor', abnormal:'Stridor audible, upper airway compromise'},
+      {id:'ana_angioedema_lip', normal:'No lip swelling or angioedema', abnormal:'Lip angioedema present'},
+      {id:'ana_angioedema_tongue', normal:'No tongue swelling', abnormal:'Tongue swelling present, airway at risk'},
+      {id:'ana_angioedema_uvula', normal:'Uvula midline, no oropharyngeal oedema', abnormal:'Uvular or oropharyngeal oedema present'},
+      {id:'ana_angioedema_face', normal:'No facial angioedema', abnormal:'Facial angioedema present'}
+    ],
+    resp: [
+      {id:'ana_wob', normal:'Work of breathing normal, no accessory muscle use', abnormal:'Increased work of breathing, accessory muscle use'},
+      {id:'ana_wheeze', normal:'No wheeze on auscultation', abnormal:'Wheeze present bilaterally'},
+      {id:'ana_bs', normal:'Breath sounds clear bilaterally', abnormal:'Decreased or absent breath sounds at ___'},
+      {id:'ana_sats', normal:'Oxygen saturations acceptable on room air', abnormal:'Hypoxia present, oxygen required'}
+    ],
+    cardiac: [
+      {id:'ana_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm or tachycardia'},
+      {id:'ana_perfusion', normal:'Perfusion adequate, warm peripheries', abnormal:'Poor perfusion, cold peripheries, anaphylactic shock'}
+    ],
+    abdomen: [
+      {id:'ana_cramps', normal:'No abdominal tenderness or cramping on palpation', abnormal:'Abdominal tenderness or cramping present'}
+    ],
+    skin: [
+      {id:'ana_urticaria', normal:'No urticaria', abnormal:'Urticaria present, distribution: ___'},
+      {id:'ana_erythema', normal:'No erythema or flushing', abnormal:'Erythema or flushing present'},
+      {id:'ana_pruritus', normal:'No visible scratching or excoriation', abnormal:'Excoriation from pruritus present'},
+      {id:'ana_diaphor', normal:'No diaphoresis or pallor', abnormal:'Diaphoresis and pallor present'},
+      {id:'ana_injection', normal:'No identifiable sting or injection site', abnormal:'Sting or injection site identified at ___'}
+    ],
+    extremities: [
+      {id:'ana_capref', normal:'Capillary refill less than 2 seconds', abnormal:'Capillary refill greater than 2 seconds, poor perfusion'},
+      {id:'ana_edema', normal:'No oedema beyond any local reaction', abnormal:'Generalised oedema present'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'airway',title:'Airway / Angioedema'},
+    {key:'resp',title:'Respiratory / Bronchospasm'},
+    {key:'cardiac',title:'Cardiovascular'},
+    {key:'abdomen',title:'Abdomen'},
+    {key:'skin',title:'Skin'},
+    {key:'extremities',title:'Extremities'}
+  ];
+  container.innerHTML = buildModuleHTML('anaphylaxis', 'Allergic Reaction / Anaphylaxis Exam Findings', secs);
 }
 
 // ============================================================
