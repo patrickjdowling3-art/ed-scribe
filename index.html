@@ -1080,6 +1080,144 @@
   <!-- Dynamic complaint module content -->
   <div id="complaint-module-container"></div>
 
+  <!-- Exam Section Controls -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot active" id="dot-exam-sections"></div>
+        Exam Sections Performed
+      </div>
+      <span class="chevron" style="transform:rotate(180deg)">&#9660;</span>
+    </div>
+    <div class="section-body open">
+      <div style="font-size:15px;color:var(--text3);margin-bottom:10px;">
+        Toggle OFF to exclude a section from output entirely. Sections with module findings auto-enable.
+      </div>
+      <div id="exam-section-toggles" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- POCUS Section -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-title">
+        <div class="section-dot" id="dot-pocus"></div>
+        Point of Care Ultrasound (POCUS)
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="toggle" id="toggle-pocus" onclick="event.stopPropagation();togglePocus()"></div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body" style="display:none;">
+      <div style="font-size:15px;color:var(--text3);margin-bottom:10px;">Toggle on to include POCUS in output. Select findings per view.</div>
+
+      <!-- Cardiac -->
+      <div class="field-group">
+        <div class="field-label">Cardiac</div>
+        <select id="pocus-cardiac">
+          <option value="">-- Not performed --</option>
+          <option value="Normal cardiac function. No pericardial effusion. Hyperdynamic contractility. Good LV function.">Normal - good LV function, no effusion</option>
+          <option value="Reduced LV function on POCUS assessment.">Reduced LV function</option>
+          <option value="Pericardial effusion identified. No sonographic evidence of tamponade physiology.">Pericardial effusion, no tamponade</option>
+          <option value="Pericardial effusion with features of tamponade physiology.">Pericardial effusion with tamponade features</option>
+          <option value="Hyperdynamic LV function. Underfilled ventricles.">Hyperdynamic / underfilled</option>
+          <option value="Limited cardiac views obtained.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- FAST - RUQ -->
+      <div class="field-group">
+        <div class="field-label">FAST - RUQ (Morison's Pouch)</div>
+        <select id="pocus-fast-ruq">
+          <option value="">-- Not performed --</option>
+          <option value="No free fluid in Morison's pouch.">No free fluid</option>
+          <option value="Free fluid identified in Morison's pouch.">Free fluid present</option>
+          <option value="Limited views - RUQ.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- FAST - LUQ -->
+      <div class="field-group">
+        <div class="field-label">FAST - LUQ (Splenorenal)</div>
+        <select id="pocus-fast-luq">
+          <option value="">-- Not performed --</option>
+          <option value="No free fluid in splenorenal space.">No free fluid</option>
+          <option value="Free fluid identified in splenorenal space.">Free fluid present</option>
+          <option value="Limited views - LUQ.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- FAST - Pelvis -->
+      <div class="field-group">
+        <div class="field-label">FAST - Pelvis (Pouch of Douglas / Retzius)</div>
+        <select id="pocus-fast-pelvis">
+          <option value="">-- Not performed --</option>
+          <option value="No free fluid in the pelvis.">No free fluid</option>
+          <option value="Free fluid identified in the pelvis.">Free fluid present</option>
+          <option value="Limited views - pelvis.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- Lung -->
+      <div class="field-group">
+        <div class="field-label">Lung (bilateral)</div>
+        <select id="pocus-lung">
+          <option value="">-- Not performed --</option>
+          <option value="Bilateral lung sliding confirmed. No B-lines. No pneumothorax identified on POCUS.">Bilateral sliding present, no PTX, no B-lines</option>
+          <option value="Bilateral lung sliding present. B-lines noted bilaterally consistent with pulmonary oedema.">Sliding present, B-lines bilateral (oedema)</option>
+          <option value="Absent lung sliding on the left. Concern for pneumothorax.">Absent sliding left - ?PTX</option>
+          <option value="Absent lung sliding on the right. Concern for pneumothorax.">Absent sliding right - ?PTX</option>
+          <option value="Lung point identified.">Lung point identified</option>
+          <option value="Unilateral B-lines noted.">Unilateral B-lines</option>
+          <option value="Limited lung views obtained.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- Aorta -->
+      <div class="field-group">
+        <div class="field-label">Aorta</div>
+        <select id="pocus-aorta">
+          <option value="">-- Not performed --</option>
+          <option value="Abdominal aorta visualised. No aneurysm identified on POCUS. Aortic diameter within normal limits.">No AAA, normal calibre</option>
+          <option value="Abdominal aortic aneurysm identified on POCUS.">AAA identified</option>
+          <option value="Aortic diameter at upper limit of normal on POCUS.">Borderline calibre</option>
+          <option value="Limited aortic views - bowel gas.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- DVT -->
+      <div class="field-group">
+        <div class="field-label">DVT (lower limb venous compression)</div>
+        <select id="pocus-dvt">
+          <option value="">-- Not performed --</option>
+          <option value="Bilateral lower limb venous compression ultrasound performed. Full compressibility of femoral and popliteal veins bilaterally. No DVT identified on POCUS.">Bilateral - no DVT</option>
+          <option value="Non-compressible femoral/popliteal vein identified. DVT suspected on POCUS.">DVT identified</option>
+          <option value="Limited DVT assessment.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- Bladder / Renal -->
+      <div class="field-group">
+        <div class="field-label">Bladder / Renal</div>
+        <select id="pocus-renal">
+          <option value="">-- Not performed --</option>
+          <option value="Bilateral kidneys visualised. No hydronephrosis. Bladder appears decompressed.">Normal - no hydronephrosis</option>
+          <option value="Unilateral hydronephrosis identified on POCUS.">Hydronephrosis (unilateral)</option>
+          <option value="Bilateral hydronephrosis identified on POCUS.">Hydronephrosis (bilateral)</option>
+          <option value="Bladder significantly distended on POCUS.">Bladder distension</option>
+          <option value="Limited renal views.">Limited views</option>
+        </select>
+      </div>
+
+      <!-- Comments -->
+      <div class="field-group">
+        <div class="field-label">Additional POCUS comments</div>
+        <textarea id="pocus-comments" rows="3" placeholder="Free text - additional findings, other views performed, limitations..." style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text1);resize:vertical;"></textarea>
+      </div>
+    </div>
+  </div>
+
   <!-- Red flag synthesis toggle -->
   <div class="section">
     <div class="section-header">
@@ -1185,6 +1323,7 @@ const examFindings = {};
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   initROS();
+  initExamSectionToggles();
 });
 
 function initROS() {
@@ -1268,6 +1407,12 @@ function cycleRosFinding(sysKey, finding, rowEl) {
   const cur = rosState[sysKey][finding];
   const next = (cur + 1) % 3;
   rosState[sysKey][finding] = next;
+  // Auto-enable system if a finding is actively selected and system is currently off
+  if (next > 0 && !rosSystems[sysKey]) {
+    rosSystems[sysKey] = true;
+    const t = document.getElementById('toggle-' + sysKey);
+    if (t) t.classList.add('on');
+  }
   const id = finding.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'');
   const statusEl = document.getElementById('status-' + sysKey + '-' + id);
   if (next === 0) {
@@ -1312,6 +1457,66 @@ function toggleSynthesis() {
   const t = document.getElementById('toggle-synthesis');
   if (synthesiEnabled) t.classList.add('on'); else t.classList.remove('on');
   updateDot('dot-synthesis', synthesiEnabled ? 'active' : 'off');
+}
+
+let pocusEnabled = false;
+
+function togglePocus() {
+  pocusEnabled = !pocusEnabled;
+  const t = document.getElementById('toggle-pocus');
+  if (pocusEnabled) t.classList.add('on'); else t.classList.remove('on');
+  updateDot('dot-pocus', pocusEnabled ? 'active' : 'off');
+}
+
+// Exam section done/not-done tracking
+const EXAM_SECTIONS = [
+  {key:'general',    label:'General'},
+  {key:'head',       label:'Head'},
+  {key:'heent',      label:'Eyes / HEENT'},
+  {key:'neck',       label:'Neck'},
+  {key:'respiratory',label:'Respiratory'},
+  {key:'chest_wall', label:'Chest Wall'},
+  {key:'cardiac',    label:'Cardiac'},
+  {key:'abdomen',    label:'Abdomen'},
+  {key:'genitourinary',label:'Genitourinary'},
+  {key:'back',       label:'Back'},
+  {key:'extremities',label:'Extremities'},
+  {key:'neurological',label:'Neurological'},
+  {key:'skin',       label:'Skin'},
+  {key:'psychiatric',label:'Psychiatric'}
+];
+
+const examSectionEnabled = {};
+
+function initExamSectionToggles() {
+  EXAM_SECTIONS.forEach(s => { examSectionEnabled[s.key] = true; });
+  const container = document.getElementById('exam-section-toggles');
+  if (!container) return;
+  let html = '';
+  EXAM_SECTIONS.forEach(s => {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);padding:8px 10px;border-radius:8px;">
+      <span style="font-size:15px;">${s.label}</span>
+      <div class="toggle on" id="esec-${s.key}" onclick="toggleExamSection('${s.key}')"></div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggleExamSection(key) {
+  examSectionEnabled[key] = !examSectionEnabled[key];
+  const t = document.getElementById('esec-' + key);
+  if (t) {
+    if (examSectionEnabled[key]) t.classList.add('on'); else t.classList.remove('on');
+  }
+}
+
+// Auto-enable a section when a finding within it is toggled
+function autoEnableExamSection(key) {
+  if (!examSectionEnabled[key]) {
+    examSectionEnabled[key] = true;
+    const t = document.getElementById('esec-' + key);
+    if (t) t.classList.add('on');
+  }
 }
 
 function loadComplaintModule() {
@@ -1867,60 +2072,74 @@ function generateOutput() {
   if (complaint === 'trauma') {
     const mechEl = document.getElementById('tr-mechanism');
     const mechVal = mechEl ? mechEl.value.trim() : '';
-    output += 'Mechanism of Injury: ' + (mechVal || '(not specified)') + '\n';
+    const mechDetail = getMechDetail();
+    output += 'Mechanism of Injury: ' + (mechVal ? mechVal + mechDetail : '(not specified)') + '\n';
   }
 
   // GENERAL
-  output += 'General: ' + (
-    moduleSection('general') ||
-    `Patient is a ${agePrefix}${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
-  ) + '\n';
+  if (examSectionEnabled['general']) {
+    output += 'General: ' + (
+      moduleSection('general') ||
+      `Patient is a ${agePrefix}${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
+    ) + '\n';
+  }
 
-  // HEAD (no module section covers this - always scaffold)
-  output += 'Head: Normocephalic, atraumatic. No visible injuries or deformities.\n';
+  // HEAD
+  if (examSectionEnabled['head']) {
+    output += 'Head: Normocephalic, atraumatic. No visible injuries or deformities.\n';
+  }
 
-  // EYES / HEENT - chest pain and sob modules use 'heent'
-  const heentText = moduleSection('heent');
-  if (heentText) {
-    output += 'HEENT: ' + heentText + '\n';
-  } else {
-    output += 'Eyes: Open and symmetrical, no periorbital swelling or visible discharge. Pupils appear equal and reactive to light. No obvious scleral icterus or conjunctival injection.\n';
-    output += 'Ears: External ears normal in appearance, no discharge or visible lesions.\n';
-    output += 'Nose: Midline, no visible deformity or bleeding.\n';
+  // EYES / HEENT
+  if (examSectionEnabled['heent']) {
+    const heentText = moduleSection('heent');
+    if (heentText) {
+      output += 'HEENT: ' + heentText + '\n';
+    } else {
+      output += 'Eyes: Open and symmetrical, no periorbital swelling or visible discharge. Pupils appear equal and reactive to light. No obvious scleral icterus or conjunctival injection.\n';
+      output += 'Ears: External ears normal in appearance, no discharge or visible lesions.\n';
+      output += 'Nose: Midline, no visible deformity or bleeding.\n';
+    }
   }
 
   // NECK
-  const neckText = moduleSection('neck');
-  output += 'Neck: ' + (neckText || 'Trachea appears midline, no visible swelling or masses.') + '\n';
-
-  // RESPIRATORY
-  const respText = moduleSection('resp');
-  output += 'Respiratory: ' + (respText || 'No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.') + '\n';
-
-  // CHEST WALL (chest pain module uses 'chest_wall'; trauma module uses 'chest')
-  const chestWallText = moduleSection('chest_wall');
-  const chestTraumaText = moduleSection('chest');
-  if (chestWallText) {
-    output += 'Chest Wall: ' + chestWallText + '\n';
-  } else if (chestTraumaText) {
-    output += 'Chest / Chest Wall: ' + chestTraumaText + '\n';
+  if (examSectionEnabled['neck']) {
+    const neckText = moduleSection('neck');
+    output += 'Neck: ' + (neckText || 'Trachea appears midline, no visible swelling or masses.') + '\n';
   }
 
-  // CARDIAC - inspection and auscultation may be separate sections
-  const cardiacInspText = moduleSection('cardiac_insp');
-  const cardiacAuscText = moduleSection('cardiac_ausc');
-  const cardiacText = moduleSection('cardiac'); // sob module uses single 'cardiac' key
-  if (cardiacInspText || cardiacAuscText) {
-    if (cardiacInspText) output += 'Cardiac (Inspection/Palpation): ' + cardiacInspText + '\n';
-    if (cardiacAuscText) output += 'Cardiac (Auscultation): ' + cardiacAuscText + '\n';
-  } else if (cardiacText) {
-    output += 'Cardiovascular: ' + cardiacText + '\n';
-  } else {
-    output += 'Cardiac: No visible pulsations or signs of distress. Regular rate and rhythm. Heart sounds normal.\n';
+  // RESPIRATORY
+  if (examSectionEnabled['respiratory']) {
+    const respText = moduleSection('resp');
+    output += 'Respiratory: ' + (respText || 'No audible wheeze, stridor, or laboured breathing. Respiratory rate appears normal.') + '\n';
+  }
+
+  // CHEST WALL
+  if (examSectionEnabled['chest_wall']) {
+    const chestWallText = moduleSection('chest_wall');
+    const chestTraumaText = moduleSection('chest');
+    if (chestWallText) {
+      output += 'Chest Wall: ' + chestWallText + '\n';
+    } else if (chestTraumaText) {
+      output += 'Chest / Chest Wall: ' + chestTraumaText + '\n';
+    }
+  }
+
+  // CARDIAC
+  if (examSectionEnabled['cardiac']) {
+    const cardiacInspText = moduleSection('cardiac_insp');
+    const cardiacAuscText = moduleSection('cardiac_ausc');
+    const cardiacText = moduleSection('cardiac');
+    if (cardiacInspText || cardiacAuscText) {
+      if (cardiacInspText) output += 'Cardiac (Inspection/Palpation): ' + cardiacInspText + '\n';
+      if (cardiacAuscText) output += 'Cardiac (Auscultation): ' + cardiacAuscText + '\n';
+    } else if (cardiacText) {
+      output += 'Cardiovascular: ' + cardiacText + '\n';
+    } else {
+      output += 'Cardiac: No visible pulsations or signs of distress. Regular rate and rhythm. Heart sounds normal.\n';
+    }
   }
 
   // ABDOMEN
-  // back_pain module reuses 'inspection', 'palpation', 'cva' keys for spine - exclude them from abdo block
   const isBackPain = (complaint === 'back_pain');
   const abdoInspText = isBackPain ? null : moduleSection('inspection');
   const abdoAuscText = moduleSection('auscultation');
@@ -1931,74 +2150,93 @@ function generateOutput() {
   const abdoCvaText = isBackPain ? null : moduleSection('cva');
   const abdoRectalText = moduleSection('rectal');
   const abdoText = isBackPain ? null : moduleSection('abdomen');
-  if (abdoInspText || abdoAuscText || abdoPalpText || abdoOrgText || abdoPercText || abdoHernText) {
-    if (abdoInspText) output += 'Abdomen (Inspection): ' + abdoInspText + '\n';
-    if (abdoAuscText) output += 'Abdomen (Auscultation): ' + abdoAuscText + '\n';
-    if (abdoPalpText) output += 'Abdomen (Palpation): ' + abdoPalpText + '\n';
-    if (abdoOrgText) output += 'Abdomen (Organomegaly/Masses): ' + abdoOrgText + '\n';
-    if (abdoPercText) output += 'Abdomen (Percussion): ' + abdoPercText + '\n';
-    if (abdoHernText) output += 'Hernias: ' + abdoHernText + '\n';
-    if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
-    if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
-  } else if (abdoText) {
-    output += 'Abdomen: ' + abdoText + '\n';
-    if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
-    if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
-  } else if (!isBackPain) {
-    output += 'Abdomen: Soft, non-tender, non-distended. No guarding or rebound.\n';
+  if (examSectionEnabled['abdomen']) {
+    if (abdoInspText || abdoAuscText || abdoPalpText || abdoOrgText || abdoPercText || abdoHernText) {
+      if (abdoInspText) output += 'Abdomen (Inspection): ' + abdoInspText + '\n';
+      if (abdoAuscText) output += 'Abdomen (Auscultation): ' + abdoAuscText + '\n';
+      if (abdoPalpText) output += 'Abdomen (Palpation): ' + abdoPalpText + '\n';
+      if (abdoOrgText) output += 'Abdomen (Organomegaly/Masses): ' + abdoOrgText + '\n';
+      if (abdoPercText) output += 'Abdomen (Percussion): ' + abdoPercText + '\n';
+      if (abdoHernText) output += 'Hernias: ' + abdoHernText + '\n';
+      if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
+      if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
+    } else if (abdoText) {
+      output += 'Abdomen: ' + abdoText + '\n';
+      if (abdoCvaText) output += 'CVA/Flank: ' + abdoCvaText + '\n';
+      if (abdoRectalText) output += 'Rectal: ' + abdoRectalText + '\n';
+    } else if (!isBackPain) {
+      output += 'Abdomen: Soft, non-tender, non-distended. No guarding or rebound.\n';
+    }
   }
 
-  // GENITOURINARY (uro module) - output after abdomen block
-  const genitourinaryText = moduleSection('genitourinary');
-  if (genitourinaryText) {
-    output += 'Genitourinary: ' + genitourinaryText + '\n';
-  }
-
-  // Global CVA/Flank - for uro module (not back_pain, not abdo block already handled above)
-  if (!isBackPain && !abdoText && !abdoInspText) {
-    const globalCvaText = moduleSection('cva');
-    if (globalCvaText) output += 'CVA/Flank: ' + globalCvaText + '\n';
+  // GENITOURINARY
+  if (examSectionEnabled['genitourinary']) {
+    const genitourinaryText = moduleSection('genitourinary');
+    if (genitourinaryText) {
+      output += 'Genitourinary: ' + genitourinaryText + '\n';
+    }
+    // Global CVA/Flank - for uro module (not back_pain, not abdo block already handled above)
+    if (!isBackPain && !abdoText && !abdoInspText) {
+      const globalCvaText = moduleSection('cva');
+      if (globalCvaText) output += 'CVA/Flank: ' + globalCvaText + '\n';
+    }
   }
 
   // BACK
-  // chest pain module has a simple 'back' key; back pain module has palpation/inspection/cva/abdomen/rom/etc.
-  const backSimpleText = isBackPain ? null : moduleSection('back');
-  const romText = moduleSection('rom');
-  const neuroLowerText = moduleSection('neuro_lower');
-  const radText = moduleSection('radicular');
-  const hipText = moduleSection('hip');
-  const caudaText = moduleSection('cauda');
-  const vascText = moduleSection('vascular');
-  if (isBackPain) {
-    const bpInspText = moduleSection('inspection');
-    const bpPalpText = moduleSection('palpation');
-    const bpCvaText = moduleSection('cva');
-    const bpAbdoText = moduleSection('abdomen');
-    if (bpInspText) output += 'Back (Inspection): ' + bpInspText + '\n';
-    if (bpPalpText) output += 'Back (Palpation): ' + bpPalpText + '\n';
-    if (bpCvaText) output += 'CVA/Flank: ' + bpCvaText + '\n';
-    if (bpAbdoText) output += 'Abdomen: ' + bpAbdoText + '\n';
-    if (romText) output += 'Back (Range of Motion): ' + romText + '\n';
-    if (neuroLowerText) output += 'Lower Limb Neurological: ' + neuroLowerText + '\n';
-    if (radText) output += 'Radicular Provocation: ' + radText + '\n';
-    if (hipText) output += 'Hip/SI Screening: ' + hipText + '\n';
-    if (caudaText) output += 'Cauda Equina Screen: ' + caudaText + '\n';
-    if (vascText) output += 'Peripheral Vascular/DVT: ' + vascText + '\n';
-  } else if (backSimpleText) {
-    output += 'Back: ' + backSimpleText + '\n';
+  if (examSectionEnabled['back']) {
+    const backSimpleText = isBackPain ? null : moduleSection('back');
+    const romText = moduleSection('rom');
+    const neuroLowerText = moduleSection('neuro_lower');
+    const radText = moduleSection('radicular');
+    const hipText = moduleSection('hip');
+    const caudaText = moduleSection('cauda');
+    const vascText = moduleSection('vascular');
+    if (isBackPain) {
+      const bpInspText = moduleSection('inspection');
+      const bpPalpText = moduleSection('palpation');
+      const bpCvaText = moduleSection('cva');
+      const bpAbdoText = moduleSection('abdomen');
+      if (bpInspText) output += 'Back (Inspection): ' + bpInspText + '\n';
+      if (bpPalpText) output += 'Back (Palpation): ' + bpPalpText + '\n';
+      if (bpCvaText) output += 'CVA/Flank: ' + bpCvaText + '\n';
+      if (bpAbdoText) output += 'Abdomen: ' + bpAbdoText + '\n';
+      if (romText) output += 'Back (Range of Motion): ' + romText + '\n';
+      if (neuroLowerText) output += 'Lower Limb Neurological: ' + neuroLowerText + '\n';
+      if (radText) output += 'Radicular Provocation: ' + radText + '\n';
+      if (hipText) output += 'Hip/SI Screening: ' + hipText + '\n';
+      if (caudaText) output += 'Cauda Equina Screen: ' + caudaText + '\n';
+      if (vascText) output += 'Peripheral Vascular/DVT: ' + vascText + '\n';
+    } else if (backSimpleText) {
+      output += 'Back: ' + backSimpleText + '\n';
+    }
   }
 
   // EXTREMITIES
-  const extText = moduleSection('extremities');
-  output += 'Extremities: ' + (extText || 'Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.') + '\n';
+  if (examSectionEnabled['extremities']) {
+    const extText = moduleSection('extremities');
+    output += 'Extremities: ' + (extText || 'Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.') + '\n';
+  }
 
   // NEUROLOGICAL
-  const neuroText = moduleSection('neuro');
-  output += 'Neurological: ' + (neuroText || 'Patient converses appropriately, follows commands. No obvious motor deficits or facial asymmetry observed.') + '\n';
+  if (examSectionEnabled['neurological']) {
+    const neuroText = moduleSection('neuro');
+    output += 'Neurological: ' + (neuroText || 'Patient converses appropriately, follows commands. No obvious motor deficits or facial asymmetry observed.') + '\n';
+    // NIHSS sections (stroke module) - nested under neurological gate
+    const nihssMotorText = moduleSection('nihss_motor');
+    const nihssSpeechText = moduleSection('nihss_speech');
+    const nihssSensationText = moduleSection('nihss_sensation');
+    const neuroOtherText = moduleSection('neuro_other');
+    if (nihssMotorText) output += 'Motor (NIHSS): ' + nihssMotorText + '\n';
+    if (nihssSpeechText) output += 'Speech and Language (NIHSS): ' + nihssSpeechText + '\n';
+    if (nihssSensationText) output += 'Sensation and Coordination (NIHSS): ' + nihssSensationText + '\n';
+    if (neuroOtherText) output += 'Neurological (Other): ' + neuroOtherText + '\n';
+  }
 
   // SKIN
-  const skinText = moduleSection('skin');
-  output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
+  if (examSectionEnabled['skin']) {
+    const skinText = moduleSection('skin');
+    output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
+  }
 
   // MODULE-SPECIFIC ADDITIONAL SECTIONS
   // Fundoscopy (headache module)
@@ -2017,23 +2255,45 @@ function generateOutput() {
   const airwayText = moduleSection('airway');
   if (airwayText) output += 'Airway / Angioedema: ' + airwayText + '\n';
 
-  // NIHSS sections (stroke module)
-  const nihssMotorText = moduleSection('nihss_motor');
-  const nihssSpeechText = moduleSection('nihss_speech');
-  const nihssSensationText = moduleSection('nihss_sensation');
-  const neuroOtherText = moduleSection('neuro_other');
-  if (nihssMotorText) output += 'Motor (NIHSS): ' + nihssMotorText + '\n';
-  if (nihssSpeechText) output += 'Speech and Language (NIHSS): ' + nihssSpeechText + '\n';
-  if (nihssSensationText) output += 'Sensation and Coordination (NIHSS): ' + nihssSensationText + '\n';
-  if (neuroOtherText) output += 'Neurological (Other): ' + neuroOtherText + '\n';
+  // PSYCHIATRIC
+  if (examSectionEnabled['psychiatric']) {
+    output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
+  }
 
-  // PSYCHIATRIC - no complaint module covers this, always scaffold
-  output += 'Psychiatric: Patient is calm, cooperative, and appropriately interactive. Affect congruent with situation. No signs of psychomotor agitation.\n';
+  // POCUS
+  if (pocusEnabled) {
+    const pocusViews = [
+      {id:'pocus-cardiac',    label:'Cardiac'},
+      {id:'pocus-fast-ruq',   label:'FAST (RUQ)'},
+      {id:'pocus-fast-luq',   label:'FAST (LUQ)'},
+      {id:'pocus-fast-pelvis',label:'FAST (Pelvis)'},
+      {id:'pocus-lung',       label:'Lung'},
+      {id:'pocus-aorta',      label:'Aorta'},
+      {id:'pocus-dvt',        label:'DVT'},
+      {id:'pocus-renal',      label:'Bladder / Renal'}
+    ];
+    const pocusLines = [];
+    pocusViews.forEach(v => {
+      const el = document.getElementById(v.id);
+      if (el && el.value) pocusLines.push(v.label + ': ' + el.value);
+    });
+    const pocusComments = document.getElementById('pocus-comments');
+    const pocusExtra = pocusComments ? pocusComments.value.trim() : '';
+    if (pocusLines.length > 0 || pocusExtra) {
+      output += '\nPOINT OF CARE ULTRASOUND (POCUS)\n';
+      output += '-'.repeat(40) + '\n';
+      pocusLines.forEach(l => { output += l + '\n'; });
+      if (pocusExtra) output += 'Additional findings: ' + pocusExtra + '\n';
+    }
+  }
 
   // Synthesis
   if (synthesiEnabled) {
     output += '\n' + getSynthesisText(complaint) + '\n';
   }
+
+  // Heidi AI instruction
+  output += '\n---\n[Heidi: please amend the review of systems and physical examination in the formal note so that the findings listed above correspond to the transcript.]\n';
 
   document.getElementById('output-area').textContent = output.trim();
   showTab('output');
@@ -2217,6 +2477,16 @@ function resetAll() {
   Object.keys(examFindings).forEach(k => { examFindings[k] = 'normal'; });
   synthesiEnabled = false;
   document.getElementById('toggle-synthesis').classList.remove('on');
+  pocusEnabled = false;
+  const pt = document.getElementById('toggle-pocus');
+  if (pt) pt.classList.remove('on');
+  updateDot('dot-pocus', 'off');
+  // Reset exam section toggles to all-on
+  EXAM_SECTIONS.forEach(s => {
+    examSectionEnabled[s.key] = true;
+    const t = document.getElementById('esec-' + s.key);
+    if (t) t.classList.add('on');
+  });
 
   // Reset output
   document.getElementById('output-area').textContent = 'Tap Generate Note to build your output.';
@@ -2432,6 +2702,130 @@ function buildAMSModule(container) {
   container.innerHTML = buildModuleHTML('ams', 'Altered Mental Status Exam Findings', secs);
 }
 
+// --- MECHANISM SUB-FIELDS ---
+function updateMechSubfields() {
+  const mechVal = document.getElementById('tr-mechanism').value;
+  const container = document.getElementById('mech-subfields');
+  if (!container) return;
+
+  // Sub-field definitions per category
+  const subfields = {
+    'MVC driver': [
+      {id:'mech-speed', label:'Estimated speed (km/h)', type:'text', placeholder:'e.g. 60'},
+      {id:'mech-impact', label:'Location of impact', type:'select', options:['-- Select --','Frontal','Rear-end','Driver-side lateral','Passenger-side lateral','Rollover']},
+      {id:'mech-rollover', label:'Rollover', type:'select', options:['No','Yes']},
+      {id:'mech-ejection', label:'Ejection from vehicle', type:'select', options:['No','Yes - partial','Yes - full']},
+      {id:'mech-extraction', label:'Extrication required', type:'select', options:['No','Yes']},
+      {id:'mech-fatality', label:'Fatality at scene', type:'select', options:['No','Yes']},
+      {id:'mech-seatbelt', label:'Seatbelt worn', type:'select', options:['Unknown','Yes','No']},
+      {id:'mech-airbag', label:'Airbag deployed', type:'select', options:['Unknown','Yes','No']}
+    ],
+    'MVC passenger': [
+      {id:'mech-speed', label:'Estimated speed (km/h)', type:'text', placeholder:'e.g. 60'},
+      {id:'mech-impact', label:'Location of impact', type:'select', options:['-- Select --','Frontal','Rear-end','Driver-side lateral','Passenger-side lateral','Rollover']},
+      {id:'mech-rollover', label:'Rollover', type:'select', options:['No','Yes']},
+      {id:'mech-ejection', label:'Ejection from vehicle', type:'select', options:['No','Yes - partial','Yes - full']},
+      {id:'mech-extraction', label:'Extrication required', type:'select', options:['No','Yes']},
+      {id:'mech-fatality', label:'Fatality at scene', type:'select', options:['No','Yes']},
+      {id:'mech-seatbelt', label:'Seatbelt worn', type:'select', options:['Unknown','Yes','No']},
+      {id:'mech-airbag', label:'Airbag deployed', type:'select', options:['Unknown','Yes','No']}
+    ],
+    'MVC pedestrian struck': [
+      {id:'mech-speed', label:'Vehicle speed at impact (km/h)', type:'text', placeholder:'e.g. 40'},
+      {id:'mech-thrown', label:'Thrown by impact', type:'select', options:['No','Yes']},
+      {id:'mech-hood', label:'Over the hood', type:'select', options:['No','Yes']},
+      {id:'mech-windshield', label:'Into windshield', type:'select', options:['No','Yes']},
+      {id:'mech-runover', label:'Run over / under vehicle', type:'select', options:['No','Yes']}
+    ],
+    'MVC cyclist struck': [
+      {id:'mech-speed', label:'Vehicle speed at impact (km/h)', type:'text', placeholder:'e.g. 30'},
+      {id:'mech-impact', label:'Location of impact on cyclist', type:'select', options:['-- Select --','Lateral','Frontal','Rear']},
+      {id:'mech-helmet', label:'Helmet worn', type:'select', options:['Unknown','Yes','No']},
+      {id:'mech-thrown', label:'Thrown from bicycle', type:'select', options:['No','Yes']}
+    ],
+    'fall from standing': [
+      {id:'mech-fall-cause', label:'Cause of fall', type:'select', options:['-- Select --','Slip','Trip','Loss of balance','Syncopal / LOC','Pushed','Mechanical - legs gave way','Unknown']},
+      {id:'mech-landing', label:'Primary landing site', type:'select', options:['-- Select --','Outstretched hands','Hip/lateral','Head/face','Back','Knees','Other']},
+      {id:'mech-surface', label:'Surface', type:'text', placeholder:'e.g. concrete, grass'}
+    ],
+    'fall from height': [
+      {id:'mech-height', label:'Estimated fall height (metres)', type:'text', placeholder:'e.g. 3'},
+      {id:'mech-fall-cause', label:'Cause of fall', type:'select', options:['-- Select --','Slip','Lost footing','Pushed','Jumped (intentional)','Unknown']},
+      {id:'mech-landing', label:'Primary landing site', type:'select', options:['-- Select --','Feet first','Head first','Lateral','Back','Other']},
+      {id:'mech-surface', label:'Landing surface', type:'text', placeholder:'e.g. concrete, grass'}
+    ],
+    'assault, blunt': [
+      {id:'mech-implement', label:'Implement used', type:'select', options:['-- Select --','Fist','Kick','Blunt object (bat/stick)','Blunt object (other)','Head butt','Multiple']},
+      {id:'mech-target', label:'Primary target area', type:'select', options:['-- Select --','Head/face','Torso','Extremities','Multiple']},
+      {id:'mech-loc', label:'Loss of consciousness reported', type:'select', options:['No','Yes','Unknown']}
+    ],
+    'assault, penetrating': [
+      {id:'mech-weapon', label:'Weapon', type:'select', options:['-- Select --','Kitchen knife','Pocket knife','Stanley knife / blade','Other sharp implement','Unknown']},
+      {id:'mech-stab-count', label:'Number of wounds', type:'text', placeholder:'e.g. 1'},
+      {id:'mech-target', label:'Primary target area', type:'select', options:['-- Select --','Head/neck','Chest','Abdomen','Back','Extremities','Multiple']}
+    ],
+    'assault, penetrating gunshot': [
+      {id:'mech-firearm', label:'Type of firearm', type:'select', options:['-- Select --','Handgun','Shotgun','Rifle','Unknown']},
+      {id:'mech-gsw-count', label:'Number of wounds', type:'text', placeholder:'e.g. 1'},
+      {id:'mech-target', label:'Primary target area', type:'select', options:['-- Select --','Head/neck','Chest','Abdomen','Back','Extremities','Multiple']},
+      {id:'mech-range', label:'Estimated range', type:'select', options:['Unknown','Close range (contact / < 1m)','Mid range','Long range']}
+    ]
+  };
+
+  const fields = subfields[mechVal];
+  if (!fields || fields.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '<div style="border-left:3px solid var(--accent);padding-left:10px;margin-top:6px;">';
+  fields.forEach(f => {
+    html += `<div class="field-group" style="margin-bottom:8px;">
+      <div class="field-label" style="font-size:15px;">${f.label}</div>`;
+    if (f.type === 'select') {
+      html += `<select id="${f.id}">`;
+      f.options.forEach(o => { html += `<option value="${o}">${o}</option>`; });
+      html += `</select>`;
+    } else {
+      html += `<input type="text" id="${f.id}" placeholder="${f.placeholder || ''}" style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text1);">`;
+    }
+    html += `</div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Read mechanism sub-fields into a formatted string for output
+function getMechDetail() {
+  const mechVal = document.getElementById('tr-mechanism') ? document.getElementById('tr-mechanism').value : '';
+  if (!mechVal) return '';
+  const ids = ['mech-speed','mech-impact','mech-rollover','mech-ejection','mech-extraction',
+    'mech-fatality','mech-seatbelt','mech-airbag','mech-thrown','mech-hood','mech-windshield',
+    'mech-runover','mech-helmet','mech-fall-cause','mech-landing','mech-surface','mech-height',
+    'mech-implement','mech-target','mech-loc','mech-weapon','mech-stab-count','mech-gsw-count',
+    'mech-range','mech-firearm'];
+  const labels = {
+    'mech-speed':'Speed','mech-impact':'Impact location','mech-rollover':'Rollover',
+    'mech-ejection':'Ejection','mech-extraction':'Extrication','mech-fatality':'Fatality at scene',
+    'mech-seatbelt':'Seatbelt','mech-airbag':'Airbag','mech-thrown':'Thrown',
+    'mech-hood':'Over hood','mech-windshield':'Into windshield','mech-runover':'Run over',
+    'mech-helmet':'Helmet','mech-fall-cause':'Cause','mech-landing':'Landing',
+    'mech-surface':'Surface','mech-height':'Height','mech-implement':'Implement',
+    'mech-target':'Target area','mech-loc':'LOC','mech-weapon':'Weapon',
+    'mech-stab-count':'Number of wounds','mech-gsw-count':'Number of wounds',
+    'mech-range':'Range','mech-firearm':'Firearm type'
+  };
+  const parts = [];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value.trim();
+    if (!val || val === '-- Select --') return;
+    parts.push(labels[id] + ': ' + val);
+  });
+  return parts.length ? ' (' + parts.join(', ') + ')' : '';
+}
+
 // --- TRAUMA ---
 function buildTraumaModule(container) {
   window.examData = window.examData || {};
@@ -2517,9 +2911,9 @@ function buildTraumaModule(container) {
       <span class="chevron" style="transform:rotate(180deg)">▼</span>
     </div>
     <div class="section-body open">
-    <div class="field-group" style="margin-bottom:12px;">
+    <div class="field-group" style="margin-bottom:4px;">
       <div class="field-label">Mechanism of Injury</div>
-      <select id="tr-mechanism">
+      <select id="tr-mechanism" onchange="updateMechSubfields()">
         <option value="">-- Select mechanism --</option>
         <option value="MVC driver">MVC (driver)</option>
         <option value="MVC passenger">MVC (passenger)</option>
@@ -2535,6 +2929,7 @@ function buildTraumaModule(container) {
         <option value="other mechanism">Other mechanism (specify in output)</option>
       </select>
     </div>
+    <div id="mech-subfields" style="margin-bottom:12px;"></div>
     <div style="font-size:16px;color:var(--text3);margin-bottom:10px;">Normal by default. Tap to cycle: ABNORMAL (orange) then OMIT (strikethrough).</div>`;
 
   secs.forEach(s => {
