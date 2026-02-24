@@ -1436,7 +1436,18 @@ function showTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
-  event.target.classList.add('active');
+  
+  // Find and activate the clicked tab button
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    if (tab.textContent.toLowerCase().includes(name.toLowerCase()) || 
+        (name === 'ros' && tab.textContent === 'ROS') ||
+        (name === 'exam' && tab.textContent === 'Exam') ||
+        (name === 'pocus' && tab.textContent === 'POCUS') ||
+        (name === 'output' && tab.textContent === 'Output')) {
+      tab.classList.add('active');
+    }
+  });
 }
 
 function toggleSection(header) {
