@@ -1253,7 +1253,17 @@ const ROS_SYSTEMS = {
   },
   eyes: {
     label: 'Eyes',
-    findings: ['visual changes','blurred vision','double vision','eye pain','photophobia','eye discharge','eye redness','floaters or flashes','vision loss']
+    findings: ['visual changes','blurred vision','eye pain','photophobia','eye discharge','eye redness','floaters or flashes'],
+    detailedFindings: {
+      'double vision': {
+        type: 'select',
+        options: ['horizontal','vertical','not specified']
+      },
+      'vision loss': {
+        type: 'select',
+        options: ['total','one eye','visual field cut (unilateral hemianopsia)','bitemporal hemianopsia','upper visual field cut','lower visual field cut']
+      }
+    }
   },
   ent: {
     label: 'ENT',
@@ -1261,11 +1271,31 @@ const ROS_SYSTEMS = {
   },
   cardiovascular: {
     label: 'Cardiovascular',
-    findings: ['chest pain','chest tightness or pressure','palpitations','syncope or near-syncope','exertional dyspnea','orthopnoea','paroxysmal nocturnal dyspnoea','leg swelling or oedema','claudication','exertional chest pain']
+    findings: ['palpitations','syncope or near-syncope','exertional dyspnea','orthopnoea','paroxysmal nocturnal dyspnoea','leg swelling or oedema','claudication'],
+    detailedFindings: {
+      'chest pain': {
+        type: 'fields',
+        fields: ['nature','onset','duration','provoking factors','relieving factors','radiation']
+      },
+      'chest tightness or pressure': {
+        type: 'fields',
+        fields: ['nature','onset','duration','provoking factors','relieving factors']
+      },
+      'exertional chest pain': {
+        type: 'fields',
+        fields: ['nature','onset','duration','relieving factors']
+      }
+    }
   },
   respiratory: {
     label: 'Respiratory',
-    findings: ['shortness of breath','cough','productive cough','haemoptysis','wheezing','stridor','pleuritic chest pain','snoring or sleep apnoea symptoms']
+    findings: ['cough','productive cough','haemoptysis','wheezing','stridor','pleuritic chest pain','snoring or sleep apnoea symptoms'],
+    detailedFindings: {
+      'shortness of breath': {
+        type: 'fields',
+        fields: ['onset','activity','duration','associated symptoms','exacerbating factors','relieving factors','position of comfort']
+      }
+    }
   },
   gi: {
     label: 'Gastrointestinal',
@@ -1273,11 +1303,51 @@ const ROS_SYSTEMS = {
   },
   gu: {
     label: 'Genitourinary',
-    findings: ['dysuria','haematuria','urinary frequency','urinary urgency','urinary incontinence','flank pain','suprapubic pain','nocturia','difficulty voiding','urethral discharge','vaginal discharge','vaginal bleeding (abnormal)','testicular pain','scrotal swelling']
+    findings: ['dysuria','haematuria','urinary frequency','urinary urgency','urinary incontinence','flank pain','suprapubic pain','nocturia','difficulty voiding','urethral discharge'],
+    detailedFindings: {
+      'vaginal discharge': {
+        type: 'select',
+        options: ['clear','white','purulent','brown']
+      },
+      'vaginal bleeding (abnormal)': {
+        type: 'select',
+        options: ['irregular','heavy','light','absent']
+      },
+      'testicular pain': {
+        type: 'fields',
+        fields: ['laterality','timing']
+      },
+      'scrotal swelling': {
+        type: 'fields',
+        fields: ['laterality','onset']
+      }
+    }
   },
   msk: {
     label: 'Musculoskeletal',
-    findings: ['joint pain','joint swelling','joint stiffness','back pain','neck pain','muscle aches or myalgia','muscle weakness','limited range of motion','bone pain','gait difficulty']
+    findings: ['neck pain','muscle weakness','limited range of motion','bone pain','gait difficulty'],
+    detailedFindings: {
+      'back pain': {
+        type: 'fields',
+        fields: ['area','laterality']
+      },
+      'joint pain': {
+        type: 'fields',
+        fields: ['joint','laterality']
+      },
+      'joint swelling': {
+        type: 'fields',
+        fields: ['joint','laterality']
+      },
+      'joint stiffness': {
+        type: 'fields',
+        fields: ['joint','laterality']
+      },
+      'muscle aches or myalgia': {
+        type: 'fields',
+        fields: ['area']
+      }
+    }
   },
   skin: {
     label: 'Skin / Integumentary',
@@ -1308,6 +1378,7 @@ const ROS_SYSTEMS = {
 // State: for each finding, 0=neutral, 1=does not complain of, 2=complains of/admits to
 const rosState = {};
 const rosSystems = {};  // true = included in full ROS
+const rosDetailState = {};  // for detailed findings: {sysKey: {finding: {field: value}}}
 let rosMode = 'focused';
 
 // Exam state
@@ -1330,9 +1401,17 @@ function initROS() {
   Object.keys(ROS_SYSTEMS).forEach(sysKey => {
     rosSystems[sysKey] = false;
     rosState[sysKey] = {};
+    rosDetailState[sysKey] = {};
     ROS_SYSTEMS[sysKey].findings.forEach(f => {
       rosState[sysKey][f] = 0;
     });
+    // Initialize detailed findings
+    if (ROS_SYSTEMS[sysKey].detailedFindings) {
+      Object.keys(ROS_SYSTEMS[sysKey].detailedFindings).forEach(f => {
+        rosState[sysKey][f] = 0;
+        rosDetailState[sysKey][f] = {};
+      });
+    }
     buildSystemBody(sysKey);
   });
 }
@@ -1392,6 +1471,8 @@ function buildSystemBody(sysKey) {
   if (!body) return;
   const sys = ROS_SYSTEMS[sysKey];
   let html = '<div style="font-size:16px;color:var(--text3);margin-bottom:8px;">Tap finding to cycle: neutral → does not complain of → complains of/admits to</div>';
+  
+  // Render simple findings
   sys.findings.forEach(f => {
     html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">
       <div class="finding-status" id="status-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">–</div>
@@ -1400,6 +1481,38 @@ function buildSystemBody(sysKey) {
       </div>
     </div>`;
   });
+  
+  // Render detailed findings
+  if (sys.detailedFindings) {
+    Object.keys(sys.detailedFindings).forEach(f => {
+      const detail = sys.detailedFindings[f];
+      const fid = f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'');
+      html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${fid}">
+        <div class="finding-status" id="status-${sysKey}-${fid}">–</div>
+        <div style="flex:1;">
+          <div class="finding-text">${capitalizeFirst(f)}</div>
+          <div id="detail-${sysKey}-${fid}" style="display:none;margin-top:6px;padding:8px;background:var(--surface2);border-radius:6px;">`;
+      
+      if (detail.type === 'select') {
+        html += `<select id="detailsel-${sysKey}-${fid}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','select',this.value)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface1);color:var(--text1);">
+          <option value="">-- Select --</option>`;
+        detail.options.forEach(opt => {
+          html += `<option value="${opt}">${capitalizeFirst(opt)}</option>`;
+        });
+        html += `</select>`;
+      } else if (detail.type === 'fields') {
+        detail.fields.forEach(field => {
+          html += `<div style="margin-bottom:6px;"><label style="font-size:14px;color:var(--text2);display:block;margin-bottom:2px;">${capitalizeFirst(field)}:</label>
+            <input type="text" id="detailfld-${sysKey}-${fid}-${field}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${field}',this.value)" placeholder="Enter ${field}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface1);color:var(--text1);"></div>`;
+        });
+      }
+      
+      html += `  </div>
+        </div>
+      </div>`;
+    });
+  }
+  
   body.innerHTML = html;
 }
 
@@ -1425,7 +1538,19 @@ function cycleRosFinding(sysKey, finding, rowEl) {
     statusEl.textContent = 'POS';
     statusEl.className = 'finding-status complained';
   }
+  
+  // Show/hide detail panel for detailed findings
+  const detailPanel = document.getElementById('detail-' + sysKey + '-' + id);
+  if (detailPanel) {
+    detailPanel.style.display = (next === 2) ? 'block' : 'none';
+  }
+  
   updateSystemDot(sysKey);
+}
+
+function updateRosDetail(sysKey, finding, field, value) {
+  if (!rosDetailState[sysKey][finding]) rosDetailState[sysKey][finding] = {};
+  rosDetailState[sysKey][finding][field] = value;
 }
 
 function updateSystemDot(sysKey) {
@@ -1990,8 +2115,23 @@ function generateOutput() {
       const complained = [];
       const notComplained = [];
       Object.entries(rosState[sysKey]).forEach(([finding, state]) => {
-        if (state === 2) complained.push(finding);
-        else if (state === 1) notComplained.push(finding);
+        if (state === 2) {
+          // Add detail if present
+          let findingText = finding;
+          if (rosDetailState[sysKey][finding]) {
+            const details = rosDetailState[sysKey][finding];
+            const detailParts = [];
+            Object.entries(details).forEach(([field, value]) => {
+              if (value) detailParts.push(value);
+            });
+            if (detailParts.length > 0) {
+              findingText += ' (' + detailParts.join(', ') + ')';
+            }
+          }
+          complained.push(findingText);
+        } else if (state === 1) {
+          notComplained.push(finding);
+        }
       });
       let line = sys.label + ': ';
       if (complained.length === 0 && notComplained.length === 0) {
@@ -2455,6 +2595,7 @@ function resetAll() {
     const t = document.getElementById('toggle-' + sysKey);
     if (t) t.classList.remove('on');
     Object.keys(rosState[sysKey]).forEach(f => { rosState[sysKey][f] = 0; });
+    rosDetailState[sysKey] = {};  // Reset detailed findings
     buildSystemBody(sysKey);
     updateSystemDot(sysKey);
   });
