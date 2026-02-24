@@ -1494,7 +1494,7 @@ function buildSystemBody(sysKey) {
           <div id="detail-${sysKey}-${fid}" onclick="event.stopPropagation()" style="display:none;margin-top:6px;padding:8px;background:var(--surface2);border-radius:6px;">`;
       
       if (detail.type === 'select') {
-        html += `<select id="detailsel-${sysKey}-${fid}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','select',this.value)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface1);color:var(--text1);">
+        html += `<select id="detailsel-${sysKey}-${fid}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','select',this.value)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
           <option value="">-- Select --</option>`;
         detail.options.forEach(opt => {
           html += `<option value="${opt}">${capitalizeFirst(opt)}</option>`;
@@ -1503,7 +1503,7 @@ function buildSystemBody(sysKey) {
       } else if (detail.type === 'fields') {
         detail.fields.forEach(field => {
           html += `<div style="margin-bottom:6px;"><label style="font-size:14px;color:var(--text2);display:block;margin-bottom:2px;">${capitalizeFirst(field)}:</label>
-            <input type="text" id="detailfld-${sysKey}-${fid}-${field}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${field}',this.value)" placeholder="Enter ${field}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface1);color:var(--text1);"></div>`;
+            <input type="text" id="detailfld-${sysKey}-${fid}-${field}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${field}',this.value)" placeholder="Enter ${field}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);"></div>`;
         });
       }
       
