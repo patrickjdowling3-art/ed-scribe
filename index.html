@@ -1328,8 +1328,13 @@ const ROS_SYSTEMS = {
     findings: ['neck pain','muscle weakness','limited range of motion','bone pain','gait difficulty'],
     detailedFindings: {
       'back pain': {
-        type: 'fields',
-        fields: ['area','laterality']
+        type: 'mixed',
+        fields: [
+          {name: 'laterality', type: 'select', options: ['left','right','center','bilateral']},
+          {name: 'location', type: 'select', options: ['cervical','thoracic','lumbar','sacral']},
+          {name: 'onset', type: 'text'},
+          {name: 'radiation', type: 'select', options: ['groin','flank','abdomen','chest','other']}
+        ]
       },
       'joint pain': {
         type: 'fields',
@@ -1504,6 +1509,22 @@ function buildSystemBody(sysKey) {
         detail.fields.forEach(field => {
           html += `<div style="margin-bottom:6px;"><label style="font-size:14px;color:var(--text2);display:block;margin-bottom:2px;">${capitalizeFirst(field)}:</label>
             <input type="text" id="detailfld-${sysKey}-${fid}-${field}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${field}',this.value)" placeholder="Enter ${field}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);"></div>`;
+        });
+      } else if (detail.type === 'mixed') {
+        detail.fields.forEach(fieldDef => {
+          const fieldName = fieldDef.name;
+          html += `<div style="margin-bottom:6px;"><label style="font-size:14px;color:var(--text2);display:block;margin-bottom:2px;">${capitalizeFirst(fieldName)}:</label>`;
+          if (fieldDef.type === 'select') {
+            html += `<select id="detailfld-${sysKey}-${fid}-${fieldName}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${fieldName}',this.value)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+              <option value="">-- Select --</option>`;
+            fieldDef.options.forEach(opt => {
+              html += `<option value="${opt}">${capitalizeFirst(opt)}</option>`;
+            });
+            html += `</select>`;
+          } else if (fieldDef.type === 'text') {
+            html += `<input type="text" id="detailfld-${sysKey}-${fid}-${fieldName}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${fieldName}',this.value)" placeholder="Enter ${fieldName}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">`;
+          }
+          html += `</div>`;
         });
       }
       
