@@ -1098,6 +1098,25 @@
     </div>
   </div>
 
+
+
+  <!-- Red flag synthesis toggle -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-dot" id="dot-synthesis"></div>
+        Exam Synthesis / Red Flags
+      </div>
+      <div class="toggle" id="toggle-synthesis" onclick="toggleSynthesis()"></div>
+    </div>
+  </div>
+
+</div><!-- end exam panel -->
+
+<!-- ======================== OUTPUT PANEL ======================== -->
+
+<!-- ======================== POCUS PANEL ======================== -->
+<div id="panel-pocus" class="panel">
   <!-- POCUS Section -->
   <div class="section">
     <div class="section-header" onclick="toggleSection(this)">
@@ -1218,21 +1237,8 @@
       </div>
     </div>
   </div>
+</div><!-- end pocus panel -->
 
-  <!-- Red flag synthesis toggle -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">
-        <div class="section-dot" id="dot-synthesis"></div>
-        Exam Synthesis / Red Flags
-      </div>
-      <div class="toggle" id="toggle-synthesis" onclick="toggleSynthesis()"></div>
-    </div>
-  </div>
-
-</div><!-- end exam panel -->
-
-<!-- ======================== OUTPUT PANEL ======================== -->
 <div id="panel-output" class="panel">
   <button class="btn btn-primary" onclick="generateOutput()">Generate Note</button>
   <div id="output-area" class="output-area" style="min-height:200px;">Tap Generate Note to build your output.</div>
