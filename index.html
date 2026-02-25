@@ -1073,6 +1073,11 @@
           <option value="uro">Urinary Symptoms / Flank Pain</option>
           <option value="palp">Palpitations</option>
           <option value="anaphylaxis">Allergic Reaction / Anaphylaxis</option>
+          <option value="eye">Eye Complaints</option>
+          <option value="neck_pain">Neck Pain</option>
+          <option value="dvt">DVT Rule Out</option>
+          <option value="rash">Rash</option>
+          <option value="urti">Cold / Flu / URTI</option>
         </select>
       </div>
     </div>
@@ -1700,7 +1705,12 @@ function loadComplaintModule() {
     stroke: buildStrokeModule,
     uro: buildUroModule,
     palp: buildPalpModule,
-    anaphylaxis: buildAnaphylaxisModule
+    anaphylaxis: buildAnaphylaxisModule,
+    eye: buildEyeModule,
+    neck_pain: buildNeckPainModule,
+    dvt: buildDVTModule,
+    rash: buildRashModule,
+    urti: buildURTIModule
   };
   if (modules[val]) modules[val](container);
   updateDot('dot-complaint-module', 'active');
@@ -3333,6 +3343,271 @@ function buildAnaphylaxisModule(container) {
     {key:'extremities',title:'Extremities'}
   ];
   container.innerHTML = buildModuleHTML('anaphylaxis', 'Allergic Reaction / Anaphylaxis Exam Findings', secs);
+}
+
+// --- EYE COMPLAINTS ---
+function buildEyeModule(container) {
+  window.examData = window.examData || {};
+  window.examData.eye = {
+    general: [
+      {id:'eye_gen', normal:'Alert, oriented, comfortable, no acute distress', abnormal:'In distress, photophobic, or unable to open affected eye'}
+    ],
+    external: [
+      {id:'eye_lids', normal:'Eyelids normal, no swelling, erythema, or discharge', abnormal:'Eyelid swelling, erythema, or discharge present on ___'},
+      {id:'eye_periorbital', normal:'No periorbital oedema or ecchymosis', abnormal:'Periorbital oedema or ecchymosis present on ___'},
+      {id:'eye_laceration', normal:'No laceration or penetrating injury visible', abnormal:'Laceration or penetrating injury suspected'},
+      {id:'eye_foreign', normal:'No visible foreign body on external examination', abnormal:'Foreign body visible on ___'},
+      {id:'eye_discharge', normal:'No discharge', abnormal:'Discharge present: ___ (purulent, watery, mucopurulent)'}
+    ],
+    conjunctiva: [
+      {id:'eye_conj', normal:'Conjunctiva normal, no injection or chemosis', abnormal:'Conjunctival injection present on ___'},
+      {id:'eye_chemosis', normal:'No chemosis', abnormal:'Chemosis present'},
+      {id:'eye_subconj', normal:'No subconjunctival haemorrhage', abnormal:'Subconjunctival haemorrhage present on ___'}
+    ],
+    cornea: [
+      {id:'eye_cornea_clear', normal:'Cornea clear bilaterally, no opacity or cloudiness', abnormal:'Corneal opacity or cloudiness on ___'},
+      {id:'eye_fluorescein', normal:'Fluorescein staining negative, no corneal defect', abnormal:'Fluorescein uptake positive, corneal abrasion or ulcer on ___'},
+      {id:'eye_dendrite', normal:'No dendritic ulcer pattern', abnormal:'Dendritic ulcer pattern consistent with HSV keratitis'},
+      {id:'eye_arc', normal:'No arc welder flash or UV burn pattern', abnormal:'Punctate keratitis consistent with arc eye / UV burn'}
+    ],
+    anterior: [
+      {id:'eye_ac', normal:'Anterior chamber clear, no hyphaema or cells', abnormal:'Hyphaema present or cells visible in AC'},
+      {id:'eye_depth', normal:'Anterior chamber depth appears normal', abnormal:'Shallow anterior chamber, narrow angle suspected'}
+    ],
+    pupils: [
+      {id:'eye_pupils', normal:'Pupils equal, round, reactive to light bilaterally', abnormal:'Pupil abnormality: ___ (specify)'},
+      {id:'eye_rapd', normal:'No relative afferent pupillary defect', abnormal:'RAPD present on ___'},
+      {id:'eye_shape', normal:'Pupils round and regular', abnormal:'Pupil irregular or peaked, globe rupture excluded?'}
+    ],
+    eom: [
+      {id:'eye_eom', normal:'Extraocular movements intact bilaterally, no restriction', abnormal:'EOM restricted in ___ (specify direction and eye)'},
+      {id:'eye_pain_eom', normal:'No pain on extraocular movements', abnormal:'Pain on EOM, concern for optic neuritis or orbital pathology'}
+    ],
+    iop: [
+      {id:'eye_iop', normal:'Intraocular pressure measured by tonometry: OD ___ mmHg, OS ___ mmHg (normal 10-21)', abnormal:'Elevated IOP: OD ___ mmHg, OS ___ mmHg (glaucoma suspected)'}
+    ],
+    vision: [
+      {id:'eye_acuity', normal:'Visual acuity grossly intact bilaterally', abnormal:'Visual acuity reduced on ___: specify OD 20/___, OS 20/___'},
+      {id:'eye_fields', normal:'Visual fields intact to confrontation bilaterally', abnormal:'Visual field defect on ___'},
+      {id:'eye_red_desat', normal:'Red desaturation test equal bilaterally', abnormal:'Red desaturation present on ___, optic nerve pathology suspected'}
+    ],
+    fundoscopy: [
+      {id:'eye_disc', normal:'Optic disc margins sharp bilaterally, no papilloedema', abnormal:'Disc margins blurred, papilloedema present'},
+      {id:'eye_retina', normal:'Retina appears attached, no haemorrhages or exudates visible', abnormal:'Retinal abnormality: ___ (specify finding)'}
+    ],
+    slit: [
+      {id:'eye_slit', normal:'Slit lamp examination unremarkable', abnormal:'Slit lamp findings: ___ (specify)'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'external',title:'External / Lids'},
+    {key:'conjunctiva',title:'Conjunctiva'},
+    {key:'cornea',title:'Cornea / Fluorescein'},
+    {key:'anterior',title:'Anterior Chamber'},
+    {key:'pupils',title:'Pupils'},
+    {key:'eom',title:'Extraocular Movements'},
+    {key:'iop',title:'Intraocular Pressure'},
+    {key:'vision',title:'Visual Acuity / Fields'},
+    {key:'fundoscopy',title:'Fundoscopy'},
+    {key:'slit',title:'Slit Lamp'}
+  ];
+  container.innerHTML = buildModuleHTML('eye', 'Eye Complaint Exam Findings', secs);
+}
+
+// --- NECK PAIN ---
+function buildNeckPainModule(container) {
+  window.examData = window.examData || {};
+  window.examData.neck_pain = {
+    general: [
+      {id:'nkp_gen', normal:'Alert, oriented, in no acute distress', abnormal:'In distress, guarding neck, or unable to move neck'},
+      {id:'nkp_position', normal:'Holding head in neutral position', abnormal:'Holding head in abnormal position or guarding'}
+    ],
+    inspection: [
+      {id:'nkp_deformity', normal:'No obvious deformity, swelling, or bruising', abnormal:'Deformity, swelling, or bruising present over ___'},
+      {id:'nkp_midline', normal:'No midline cervical spine tenderness on palpation', abnormal:'Midline tenderness present at C___ level'},
+      {id:'nkp_paraspinal', normal:'No paraspinal muscle tenderness or spasm', abnormal:'Paraspinal muscle tenderness or spasm on ___'}
+    ],
+    rom: [
+      {id:'nkp_rom', normal:'Full range of motion in all directions, flexion, extension, lateral rotation bilaterally', abnormal:'Restricted range of motion: ___ (specify limitation)'},
+      {id:'nkp_pain_rom', normal:'Minimal discomfort on active range of motion', abnormal:'Significant pain limiting range of motion'}
+    ],
+    neuro: [
+      {id:'nkp_motor_upper', normal:'Motor strength 5/5 bilaterally in upper extremities', abnormal:'Motor weakness in upper extremities: ___'},
+      {id:'nkp_sensation', normal:'Sensation intact in all dermatomes', abnormal:'Sensory deficit in ___ dermatome'},
+      {id:'nkp_reflexes', normal:'Reflexes symmetric bilaterally (biceps, triceps, brachioradialis)', abnormal:'Hyperreflexia or hyporeflexia present'},
+      {id:'nkp_pathologic', normal:'No pathologic reflexes, Babinski negative', abnormal:'Pathologic reflex present, upper motor neuron sign'},
+      {id:'nkp_spurling', normal:'Spurling test negative bilaterally', abnormal:'Spurling test positive on ___, radicular pain reproduced'},
+      {id:'nkp_lhermitte', normal:'Lhermitte sign negative', abnormal:'Lhermitte sign positive, spinal cord pathology suspected'}
+    ],
+    vascular: [
+      {id:'nkp_carotid', normal:'Carotid pulses palpable bilaterally, no bruits', abnormal:'Carotid bruit present on ___'},
+      {id:'nkp_radial', normal:'Radial pulses equal bilaterally', abnormal:'Radial pulse asymmetry, vascular injury excluded?'}
+    ],
+    lymph: [
+      {id:'nkp_nodes', normal:'No cervical lymphadenopathy', abnormal:'Cervical lymphadenopathy present, ___ (location and characteristics)'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'inspection',title:'Inspection / Palpation'},
+    {key:'rom',title:'Range of Motion'},
+    {key:'neuro',title:'Neurological'},
+    {key:'vascular',title:'Vascular'},
+    {key:'lymph',title:'Lymph Nodes'}
+  ];
+  container.innerHTML = buildModuleHTML('neck_pain', 'Neck Pain Exam Findings', secs);
+}
+
+// --- DVT RULE OUT ---
+function buildDVTModule(container) {
+  window.examData = window.examData || {};
+  window.examData.dvt = {
+    general: [
+      {id:'dvt_gen', normal:'Alert, oriented, comfortable at rest', abnormal:'In discomfort or distress'}
+    ],
+    inspection: [
+      {id:'dvt_swelling', normal:'No visible limb swelling or asymmetry', abnormal:'Limb swelling present: ___ (specify limb and location)'},
+      {id:'dvt_erythema', normal:'No erythema or skin discolouration', abnormal:'Erythema or skin discolouration present over ___'},
+      {id:'dvt_varicose', normal:'No prominent superficial veins or varicosities', abnormal:'Prominent superficial veins or varicosities present'},
+      {id:'dvt_wound', normal:'No skin breakdown or ulceration', abnormal:'Skin breakdown or venous ulceration present'}
+    ],
+    palpation: [
+      {id:'dvt_calf_tender', normal:'No calf tenderness on palpation', abnormal:'Calf tenderness present on ___'},
+      {id:'dvt_cord', normal:'No palpable cord or venous thickening', abnormal:'Palpable cord or venous thickening along ___'},
+      {id:'dvt_warmth', normal:'Skin temperature equal bilaterally', abnormal:'Increased warmth in affected limb'},
+      {id:'dvt_pitting', normal:'No pitting oedema', abnormal:'Pitting oedema present: ___ (grade and distribution)'}
+    ],
+    measurement: [
+      {id:'dvt_circum', normal:'Calf circumference measured at 10cm below tibial tuberosity: R ___ cm, L ___ cm (difference less than 3cm)', abnormal:'Calf circumference difference greater than 3cm, concern for DVT'}
+    ],
+    special: [
+      {id:'dvt_homan', normal:'Homan sign negative (unreliable test, not routinely performed)', abnormal:'Homan sign positive (unreliable)'},
+      {id:'dvt_wells', normal:'Wells score for DVT: ___ (specify score and risk category)', abnormal:'Wells score elevated, DVT likely'}
+    ],
+    pulses: [
+      {id:'dvt_dorsalis', normal:'Dorsalis pedis and posterior tibial pulses palpable bilaterally', abnormal:'Pulses diminished or absent on ___'},
+      {id:'dvt_capref', normal:'Capillary refill less than 2 seconds bilaterally', abnormal:'Capillary refill delayed on ___'}
+    ],
+    resp: [
+      {id:'dvt_resp', normal:'Respiratory rate normal, no tachypnoea or dyspnoea', abnormal:'Tachypnoea or dyspnoea present, PE excluded?'},
+      {id:'dvt_sats', normal:'Oxygen saturations normal on room air', abnormal:'Hypoxia present, oxygen required'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General'},
+    {key:'inspection',title:'Inspection'},
+    {key:'palpation',title:'Palpation'},
+    {key:'measurement',title:'Limb Measurements'},
+    {key:'special',title:'Special Tests / Scores'},
+    {key:'pulses',title:'Pulses / Perfusion'},
+    {key:'resp',title:'Respiratory (PE Screen)'}
+  ];
+  container.innerHTML = buildModuleHTML('dvt', 'DVT Rule Out Exam Findings', secs);
+}
+
+// --- RASH ---
+function buildRashModule(container) {
+  window.examData = window.examData || {};
+  window.examData.rash = {
+    general: [
+      {id:'rash_gen', normal:'Alert, oriented, comfortable, no acute distress', abnormal:'In distress, febrile, or ill-appearing'},
+      {id:'rash_vitals', normal:'Vital signs stable, afebrile', abnormal:'Febrile, tachycardic, or haemodynamically unstable'}
+    ],
+    distribution: [
+      {id:'rash_location', normal:'Rash distribution: ___ (specify location: face, trunk, extremities, palms/soles, flexor/extensor surfaces, etc)', abnormal:'Widespread or generalised rash'},
+      {id:'rash_pattern', normal:'Rash pattern: ___ (localised, symmetric, asymmetric, dermatomal, sun-exposed areas)', abnormal:'Dermatomal distribution, concerning for herpes zoster'}
+    ],
+    morphology: [
+      {id:'rash_primary', normal:'Primary lesion type: ___ (macule, papule, patch, plaque, nodule, vesicle, bulla, pustule, wheal)', abnormal:'Mixed morphology or unusual lesion type'},
+      {id:'rash_size', normal:'Lesion size: ___ (mm or cm)', abnormal:'Large lesions greater than ___cm'},
+      {id:'rash_colour', normal:'Colour: ___ (erythematous, hyperpigmented, hypopigmented, violaceous, flesh-coloured)', abnormal:'Purpuric or non-blanching lesions present'},
+      {id:'rash_surface', normal:'Surface: ___ (smooth, scaly, crusted, excoriated, weeping)', abnormal:'Weeping, crusted, or ulcerated lesions'},
+      {id:'rash_border', normal:'Border: ___ (well-demarcated, ill-defined, irregular, raised)', abnormal:'Irregular or raised borders'}
+    ],
+    characteristics: [
+      {id:'rash_blanch', normal:'Lesions blanch with pressure (non-purpuric)', abnormal:'Lesions non-blanching (purpuric), meningococcal disease or vasculitis excluded?'},
+      {id:'rash_tender', normal:'Rash non-tender to palpation', abnormal:'Rash tender to touch'},
+      {id:'rash_pruritic', normal:'No pruritus reported', abnormal:'Pruritic, patient scratching or excoriations present'},
+      {id:'rash_painful', normal:'No pain associated with rash', abnormal:'Painful rash, concerning for shingles or cellulitis'},
+      {id:'rash_nikolsky', normal:'Nikolsky sign negative', abnormal:'Nikolsky sign positive, epidermolysis suspected'}
+    ],
+    mucous: [
+      {id:'rash_oral', normal:'Oral mucosa normal, no lesions or ulceration', abnormal:'Oral mucosal involvement: ___ (erosions, ulcers, petechiae)'},
+      {id:'rash_conj', normal:'Conjunctivae normal, no injection', abnormal:'Conjunctival injection or involvement'},
+      {id:'rash_genital', normal:'Genital examination deferred or normal', abnormal:'Genital mucosal involvement present'}
+    ],
+    lymph: [
+      {id:'rash_nodes', normal:'No lymphadenopathy', abnormal:'Lymphadenopathy present: ___ (location and characteristics)'}
+    ],
+    associated: [
+      {id:'rash_joint', normal:'No joint swelling or arthritis', abnormal:'Joint swelling or arthritis present'},
+      {id:'rash_photo', normal:'No photosensitivity reported', abnormal:'Photosensitivity or photo-distributed rash'},
+      {id:'rash_angioedema', normal:'No angioedema or facial swelling', abnormal:'Angioedema present, airway monitored'}
+    ],
+    infection: [
+      {id:'rash_meningism', normal:'No meningismus or neck stiffness', abnormal:'Meningismus present, meningitis excluded?'},
+      {id:'rash_sepsis', normal:'No signs of sepsis or systemic toxicity', abnormal:'Septic appearance, immediate resuscitation required'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General / Vitals'},
+    {key:'distribution',title:'Distribution / Pattern'},
+    {key:'morphology',title:'Morphology / Lesion Type'},
+    {key:'characteristics',title:'Lesion Characteristics'},
+    {key:'mucous',title:'Mucous Membranes'},
+    {key:'lymph',title:'Lymph Nodes'},
+    {key:'associated',title:'Associated Findings'},
+    {key:'infection',title:'Infection / Sepsis Screen'}
+  ];
+  container.innerHTML = buildModuleHTML('rash', 'Rash Exam Findings', secs);
+}
+
+// --- COLD / FLU / URTI ---
+function buildURTIModule(container) {
+  window.examData = window.examData || {};
+  window.examData.urti = {
+    general: [
+      {id:'urti_gen', normal:'Alert, oriented, comfortable, no acute distress', abnormal:'Appears unwell, fatigued, or in distress'},
+      {id:'urti_vitals', normal:'Vital signs stable, afebrile or low-grade fever', abnormal:'Febrile, tachycardic, or tachypnoeic'}
+    ],
+    heent: [
+      {id:'urti_conjunctiva', normal:'Conjunctivae normal, no injection', abnormal:'Conjunctival injection or watery eyes present'},
+      {id:'urti_nasal', normal:'Nasal mucosa mildly congested, clear rhinorrhoea', abnormal:'Purulent nasal discharge, severe congestion'},
+      {id:'urti_sinus', normal:'No tenderness over frontal or maxillary sinuses', abnormal:'Sinus tenderness present over ___, sinusitis suspected'},
+      {id:'urti_pharynx', normal:'Pharynx mildly erythematous, no exudate or ulceration', abnormal:'Pharyngeal exudate, ulceration, or severe erythema'},
+      {id:'urti_tonsils', normal:'Tonsils normal size, no exudate', abnormal:'Tonsillar enlargement or exudate, strep throat excluded?'},
+      {id:'urti_uvula', normal:'Uvula midline, no oedema', abnormal:'Uvular deviation or oedema, peritonsillar abscess excluded?'},
+      {id:'urti_oral', normal:'Oral mucosa normal, no lesions', abnormal:'Oral ulceration or lesions present'},
+      {id:'urti_ears', normal:'Tympanic membranes intact bilaterally, no erythema or effusion', abnormal:'TM erythema, bulging, or effusion on ___, otitis media present'}
+    ],
+    neck: [
+      {id:'urti_nodes', normal:'Mild anterior cervical lymphadenopathy, mobile and non-tender', abnormal:'Tender or enlarged lymph nodes, ___ (location)'},
+      {id:'urti_meningism', normal:'No meningismus or neck stiffness', abnormal:'Meningismus present, meningitis excluded?'}
+    ],
+    resp: [
+      {id:'urti_wob', normal:'Work of breathing normal, no respiratory distress', abnormal:'Increased work of breathing or respiratory distress'},
+      {id:'urti_lungs', normal:'Lungs clear to auscultation bilaterally, no wheeze or crackles', abnormal:'Wheeze, crackles, or decreased breath sounds at ___'},
+      {id:'urti_cough', normal:'Cough non-productive or minimal clear sputum', abnormal:'Productive cough with purulent sputum'},
+      {id:'urti_sats', normal:'Oxygen saturations normal on room air', abnormal:'Hypoxia present, oxygen required'}
+    ],
+    skin: [
+      {id:'urti_rash', normal:'No rash or skin eruption', abnormal:'Rash present: ___ (describe distribution and morphology)'}
+    ],
+    systemic: [
+      {id:'urti_myalgia', normal:'No significant myalgia or body aches', abnormal:'Generalised myalgia and body aches reported'},
+      {id:'urti_headache', normal:'No severe headache', abnormal:'Severe headache, alternative diagnosis excluded?'}
+    ]
+  };
+  const secs = [
+    {key:'general',title:'General / Vitals'},
+    {key:'heent',title:'HEENT (Ears, Nose, Throat, Sinuses)'},
+    {key:'neck',title:'Neck / Lymph Nodes'},
+    {key:'resp',title:'Respiratory'},
+    {key:'skin',title:'Skin'},
+    {key:'systemic',title:'Systemic Symptoms'}
+  ];
+  container.innerHTML = buildModuleHTML('urti', 'Cold / Flu / URTI Exam Findings', secs);
 }
 
 // ============================================================
