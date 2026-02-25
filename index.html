@@ -2143,6 +2143,100 @@ function toggleExamFindingData(module, section, id, el) {
   }
 }
 
+function updateExamDropdown(id, label, selectEl) {
+  if (selectEl.multiple) {
+    // Multi-select: get all selected options
+    const selected = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v);
+    if (selected.length > 0) {
+      examFindings[id] = `${label}: ${selected.join(', ')}`;
+    } else {
+      examFindings[id] = '';
+    }
+  } else {
+    // Single select
+    if (selectEl.value) {
+      examFindings[id] = `${label}: ${selectEl.value}`;
+    } else {
+      examFindings[id] = '';
+    }
+  }
+}
+
+function toggleCalculator(calcId) {
+  const calcEl = document.getElementById(calcId);
+  calcEl.style.display = calcEl.style.display === 'none' ? 'block' : 'none';
+}
+
+function calcWells(id) {
+  let score = 0;
+  const criteria = ['active_cancer','paralysis','bedridden','tenderness','swollen','calf_diff','pitting','collateral','prev_dvt','alt_dx'];
+  const points = [1,1,1,1,1,1,1,1,1,-2];
+  const positive = [];
+  criteria.forEach((c, i) => {
+    const checked = document.getElementById(`${id}_${c}`)?.checked;
+    if (checked) {
+      score += points[i];
+      const labels = {
+        'active_cancer': 'active cancer',
+        'paralysis': 'paralysis/paresis/immobilisation',
+        'bedridden': 'bedridden >3 days or recent surgery',
+        'tenderness': 'deep venous tenderness',
+        'swollen': 'entire leg swollen',
+        'calf_diff': 'calf difference >3cm',
+        'pitting': 'pitting oedema',
+        'collateral': 'collateral veins',
+        'prev_dvt': 'previous DVT',
+        'alt_dx': 'alternative diagnosis likely'
+      };
+      positive.push(labels[c]);
+    }
+  });
+  const resultEl = document.getElementById(`${id}_result`);
+  let interpretation = '';
+  if (score <= 0) interpretation = 'Low probability (DVT unlikely)';
+  else if (score === 1 || score === 2) interpretation = 'Moderate probability';
+  else interpretation = 'High probability (DVT likely)';
+  resultEl.textContent = `Score: ${score} (${interpretation})`;
+  
+  if (positive.length > 0) {
+    examFindings[id] = `Wells score for DVT: ${score} (${interpretation}). Positive criteria: ${positive.join(', ')}.`;
+  } else {
+    examFindings[id] = `Wells score for DVT: ${score} (${interpretation}). No positive criteria.`;
+  }
+}
+
+function calcPERC(id) {
+  let score = 0;
+  const criteria = ['age','hr','sats','hemoptysis','estrogen','surgery','unilateral','trauma'];
+  const positive = [];
+  criteria.forEach(c => {
+    const checked = document.getElementById(`${id}_${c}`)?.checked;
+    if (checked) {
+      score += 1;
+      const labels = {
+        'age': 'age ≥50',
+        'hr': 'HR ≥100',
+        'sats': 'O2 sat <95%',
+        'hemoptysis': 'haemoptysis',
+        'estrogen': 'oestrogen use',
+        'surgery': 'prior DVT/PE',
+        'unilateral': 'unilateral leg swelling',
+        'trauma': 'recent surgery/trauma'
+      };
+      positive.push(labels[c]);
+    }
+  });
+  const resultEl = document.getElementById(`${id}_result`);
+  const interpretation = score === 0 ? 'PERC negative, PE can be excluded' : 'PERC positive, further workup required';
+  resultEl.textContent = `Score: ${score}/8 (${interpretation})`;
+  
+  if (positive.length > 0) {
+    examFindings[id] = `PERC score: ${score}/8 (${interpretation}). Positive criteria: ${positive.join(', ')}.`;
+  } else {
+    examFindings[id] = `PERC score: 0/8 (PERC negative, PE can be excluded). No positive criteria.`;
+  }
+}
+
 // ============================================================
 // OUTPUT GENERATION
 // ============================================================
@@ -2702,11 +2796,63 @@ function buildModuleHTML(moduleKey, title, sectionDefs) {
   sectionDefs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData[moduleKey][s.key].forEach(f => {
-      examFindings[f.id] = 'normal';
-      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('${moduleKey}','${s.key}','${f.id}',this)">
-        <div class="fi-dot"></div>
-        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
-      </div>`;
+      if (f.type === 'dropdown' || f.type === 'multi-dropdown') {
+        // Dropdown field
+        examFindings[f.id] = '';
+        const selectId = `sel-${f.id}`;
+        const multi = f.type === 'multi-dropdown' ? ' multiple' : '';
+        html += `<div class="field-group" style="margin-bottom:10px;">
+          <div class="field-label">${f.label}</div>
+          <select id="${selectId}"${multi} onchange="updateExamDropdown('${f.id}','${f.label}',this)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+            <option value="">-- Select --</option>`;
+        f.options.forEach(opt => {
+          html += `<option value="${opt}">${capitalizeFirst(opt)}</option>`;
+        });
+        html += `</select></div>`;
+      } else if (f.type === 'wells-calculator') {
+        // Wells DVT calculator
+        examFindings[f.id] = '';
+        html += `<div class="field-group" style="margin-bottom:10px;">
+          <div class="field-label" onclick="toggleCalculator('calc-${f.id}')" style="cursor:pointer;user-select:none;">${f.label} <span style="font-size:12px;color:var(--text3);">(click to expand)</span></div>
+          <div id="calc-${f.id}" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border-radius:6px;">
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_active_cancer" onchange="calcWells('${f.id}')"> Active cancer (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_paralysis" onchange="calcWells('${f.id}')"> Paralysis, paresis, or recent plaster immobilisation (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_bedridden" onchange="calcWells('${f.id}')"> Bedridden >3 days or major surgery within 12 weeks (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_tenderness" onchange="calcWells('${f.id}')"> Localised tenderness along deep venous system (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_swollen" onchange="calcWells('${f.id}')"> Entire leg swollen (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_calf_diff" onchange="calcWells('${f.id}')"> Calf swelling >3cm compared to asymptomatic leg (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_pitting" onchange="calcWells('${f.id}')"> Pitting oedema confined to symptomatic leg (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_collateral" onchange="calcWells('${f.id}')"> Collateral superficial veins (non-varicose) (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_prev_dvt" onchange="calcWells('${f.id}')"> Previously documented DVT (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_alt_dx" onchange="calcWells('${f.id}')"> Alternative diagnosis at least as likely (-2 points)</label></div>
+            <div style="margin-top:12px;font-weight:bold;font-size:16px;" id="${f.id}_result">Score: 0 (Low probability)</div>
+          </div>
+        </div>`;
+      } else if (f.type === 'perc-calculator') {
+        // PERC calculator
+        examFindings[f.id] = '';
+        html += `<div class="field-group" style="margin-bottom:10px;">
+          <div class="field-label" onclick="toggleCalculator('calc-${f.id}')" style="cursor:pointer;user-select:none;">${f.label} <span style="font-size:12px;color:var(--text3);">(click to expand)</span></div>
+          <div id="calc-${f.id}" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border-radius:6px;">
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_age" onchange="calcPERC('${f.id}')"> Age ≥50 years (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_hr" onchange="calcPERC('${f.id}')"> Heart rate ≥100 bpm (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_sats" onchange="calcPERC('${f.id}')"> O2 saturation <95% (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_hemoptysis" onchange="calcPERC('${f.id}')"> Haemoptysis (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_estrogen" onchange="calcPERC('${f.id}')"> Oestrogen use (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_surgery" onchange="calcPERC('${f.id}')"> Prior DVT or PE (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_unilateral" onchange="calcPERC('${f.id}')"> Unilateral leg swelling (1 point)</label></div>
+            <div style="margin-bottom:8px;"><label><input type="checkbox" id="${f.id}_trauma" onchange="calcPERC('${f.id}')"> Surgery or trauma ≤4 weeks requiring treatment with general anaesthesia (1 point)</label></div>
+            <div style="margin-top:12px;font-weight:bold;font-size:16px;" id="${f.id}_result">Score: 0 (PERC negative, PE can be excluded)</div>
+          </div>
+        </div>`;
+      } else {
+        // Normal toggle field
+        examFindings[f.id] = 'normal';
+        html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('${moduleKey}','${s.key}','${f.id}',this)">
+          <div class="fi-dot"></div>
+          <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+        </div>`;
+      }
     });
     html += `</div>`;
   });
@@ -3389,7 +3535,7 @@ function buildEyeModule(container) {
     vision: [
       {id:'eye_acuity', normal:'Visual acuity grossly intact bilaterally', abnormal:'Visual acuity reduced on ___: specify OD 20/___, OS 20/___'},
       {id:'eye_fields', normal:'Visual fields intact to confrontation bilaterally', abnormal:'Visual field defect on ___'},
-      {id:'eye_red_desat', normal:'Red desaturation test equal bilaterally', abnormal:'Red desaturation present on ___, optic nerve pathology suspected'}
+      {id:'eye_red_reflex', normal:'Red reflex present bilaterally', abnormal:'Red reflex absent on ___, cataract or retinal pathology suspected'}
     ],
     fundoscopy: [
       {id:'eye_disc', normal:'Optic disc margins sharp bilaterally, no papilloedema', abnormal:'Disc margins blurred, papilloedema present'},
@@ -3482,8 +3628,8 @@ function buildDVTModule(container) {
       {id:'dvt_circum', normal:'Calf circumference measured at 10cm below tibial tuberosity: R ___ cm, L ___ cm (difference less than 3cm)', abnormal:'Calf circumference difference greater than 3cm, concern for DVT'}
     ],
     special: [
-      {id:'dvt_homan', normal:'Homan sign negative (unreliable test, not routinely performed)', abnormal:'Homan sign positive (unreliable)'},
-      {id:'dvt_wells', normal:'Wells score for DVT: ___ (specify score and risk category)', abnormal:'Wells score elevated, DVT likely'}
+      {id:'dvt_wells', type:'wells-calculator', label:'Wells Score for DVT'},
+      {id:'dvt_perc', type:'perc-calculator', label:'PERC Score for PE'}
     ],
     pulses: [
       {id:'dvt_dorsalis', normal:'Dorsalis pedis and posterior tibial pulses palpable bilaterally', abnormal:'Pulses diminished or absent on ___'},
@@ -3515,15 +3661,15 @@ function buildRashModule(container) {
       {id:'rash_vitals', normal:'Vital signs stable, afebrile', abnormal:'Febrile, tachycardic, or haemodynamically unstable'}
     ],
     distribution: [
-      {id:'rash_location', normal:'Rash distribution: ___ (specify location: face, trunk, extremities, palms/soles, flexor/extensor surfaces, etc)', abnormal:'Widespread or generalised rash'},
-      {id:'rash_pattern', normal:'Rash pattern: ___ (localised, symmetric, asymmetric, dermatomal, sun-exposed areas)', abnormal:'Dermatomal distribution, concerning for herpes zoster'}
+      {id:'rash_location', type:'multi-dropdown', label:'Rash distribution', options:['face','trunk','extremities','palms/soles','flexor surfaces','extensor surfaces','scalp','neck','groin','diffuse/generalized']},
+      {id:'rash_pattern', type:'dropdown', label:'Rash pattern', options:['localised','symmetric','asymmetric','dermatomal','sun-exposed areas','linear','annular','targetoid']}
     ],
     morphology: [
-      {id:'rash_primary', normal:'Primary lesion type: ___ (macule, papule, patch, plaque, nodule, vesicle, bulla, pustule, wheal)', abnormal:'Mixed morphology or unusual lesion type'},
+      {id:'rash_primary', type:'multi-dropdown', label:'Primary lesion type', options:['macule','papule','patch','plaque','nodule','vesicle','bulla','pustule','wheal','petechiae','purpura']},
       {id:'rash_size', normal:'Lesion size: ___ (mm or cm)', abnormal:'Large lesions greater than ___cm'},
-      {id:'rash_colour', normal:'Colour: ___ (erythematous, hyperpigmented, hypopigmented, violaceous, flesh-coloured)', abnormal:'Purpuric or non-blanching lesions present'},
-      {id:'rash_surface', normal:'Surface: ___ (smooth, scaly, crusted, excoriated, weeping)', abnormal:'Weeping, crusted, or ulcerated lesions'},
-      {id:'rash_border', normal:'Border: ___ (well-demarcated, ill-defined, irregular, raised)', abnormal:'Irregular or raised borders'}
+      {id:'rash_colour', type:'multi-dropdown', label:'Colour', options:['erythematous','hyperpigmented','hypopigmented','violaceous','flesh-coloured','white','brown','black']},
+      {id:'rash_surface', type:'multi-dropdown', label:'Surface', options:['smooth','scaly','crusted','excoriated','weeping','ulcerated']},
+      {id:'rash_border', type:'dropdown', label:'Border', options:['well-demarcated','ill-defined','irregular','raised','flat']}
     ],
     characteristics: [
       {id:'rash_blanch', normal:'Lesions blanch with pressure (non-purpuric)', abnormal:'Lesions non-blanching (purpuric), meningococcal disease or vasculitis excluded?'},
