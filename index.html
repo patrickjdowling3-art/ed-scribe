@@ -2329,9 +2329,25 @@ function generateOutput() {
   function renderModuleSection(findings) {
     // omit state = excluded from output entirely
     const active = findings.filter(f => examFindings[f.id] !== 'omit');
-    const abnormal = active.filter(f => examFindings[f.id] === 'abnormal');
-    const normal = active.filter(f => examFindings[f.id] !== 'abnormal');
+    const dropdownValues = [];
+    const abnormal = [];
+    const normal = [];
+    
+    active.forEach(f => {
+      if (f.type === 'dropdown' || f.type === 'multi-dropdown' || f.type === 'wells-calculator' || f.type === 'perc-calculator') {
+        // Dropdown or calculator field - value stored directly in examFindings
+        if (examFindings[f.id]) {
+          dropdownValues.push(examFindings[f.id]);
+        }
+      } else if (examFindings[f.id] === 'abnormal') {
+        abnormal.push(f);
+      } else if (examFindings[f.id] !== 'abnormal') {
+        normal.push(f);
+      }
+    });
+    
     let text = '';
+    if (dropdownValues.length > 0) text += dropdownValues.join('. ') + '. ';
     if (abnormal.length > 0) text += abnormal.map(f => f.abnormal).join('. ') + '. ';
     if (normal.length > 0) text += normal.map(f => f.normal).join('. ') + '.';
     return text.trim();
