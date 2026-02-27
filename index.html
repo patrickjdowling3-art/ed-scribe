@@ -1144,6 +1144,15 @@
           <option value="">-- Not performed --</option>
           <option value="Normal cardiac function. No pericardial effusion. Hyperdynamic contractility. Good LV function.">Normal - good LV function, no effusion</option>
           <option value="Reduced LV function on POCUS assessment.">Reduced LV function</option>
+          <option value="Right heart strain on POCUS assessment.">Right heart strain</option>
+          <option value="Dilated left atrium on POCUS assessment.">Dilated left atrium</option>
+          <option value="Enlarged left atrium on POCUS assessment.">Enlarged left atrium</option>
+          <option value="Dilated right atrium on POCUS assessment.">Dilated right atrium</option>
+          <option value="Enlarged right atrium on POCUS assessment.">Enlarged right atrium</option>
+          <option value="Dilated aortic root on POCUS assessment, no dissection flap visualised.">Dilated aortic root, no dissection</option>
+          <option value="Enlarged aortic root on POCUS assessment, no dissection flap visualised.">Enlarged aortic root, no dissection</option>
+          <option value="Dilated aortic root with dissection flap visualised on POCUS assessment.">Dilated aortic root with dissection flap</option>
+          <option value="Enlarged aortic root with dissection flap visualised on POCUS assessment.">Enlarged aortic root with dissection flap</option>
           <option value="Pericardial effusion identified. No sonographic evidence of tamponade physiology.">Pericardial effusion, no tamponade</option>
           <option value="Pericardial effusion with features of tamponade physiology.">Pericardial effusion with tamponade features</option>
           <option value="Hyperdynamic LV function. Underfilled ventricles.">Hyperdynamic / underfilled</option>
@@ -1195,6 +1204,16 @@
           <option value="Absent lung sliding on the right. Concern for pneumothorax.">Absent sliding right - ?PTX</option>
           <option value="Lung point identified.">Lung point identified</option>
           <option value="Unilateral B-lines noted.">Unilateral B-lines</option>
+          <option value="Pleural effusion identified on the left.">Pleural effusion - left</option>
+          <option value="Pleural effusion identified on the right.">Pleural effusion - right</option>
+          <option value="Bilateral pleural effusions identified.">Pleural effusion - bilateral</option>
+          <option value="Consolidation identified in the left lung on POCUS assessment.">Consolidation - left lung</option>
+          <option value="Consolidation identified in the right lung on POCUS assessment.">Consolidation - right lung</option>
+          <option value="Consolidation identified in the left lower lobe on POCUS assessment.">Consolidation - left lower lobe</option>
+          <option value="Consolidation identified in the right lower lobe on POCUS assessment.">Consolidation - right lower lobe</option>
+          <option value="Consolidation identified in the left upper lobe on POCUS assessment.">Consolidation - left upper lobe</option>
+          <option value="Consolidation identified in the right upper lobe on POCUS assessment.">Consolidation - right upper lobe</option>
+          <option value="Consolidation identified in the right middle lobe on POCUS assessment.">Consolidation - right middle lobe</option>
           <option value="Limited lung views obtained.">Limited views</option>
         </select>
       </div>
@@ -1207,6 +1226,7 @@
           <option value="Abdominal aorta visualised. No aneurysm identified on POCUS. Aortic diameter within normal limits.">No AAA, normal calibre</option>
           <option value="Abdominal aortic aneurysm identified on POCUS.">AAA identified</option>
           <option value="Aortic diameter at upper limit of normal on POCUS.">Borderline calibre</option>
+          <option value="Dissection flap visualised in abdominal aorta on POCUS assessment.">Dissection flap visualised</option>
           <option value="Limited aortic views - bowel gas.">Limited views</option>
         </select>
       </div>
@@ -1228,8 +1248,12 @@
         <select id="pocus-renal">
           <option value="">-- Not performed --</option>
           <option value="Bilateral kidneys visualised. No hydronephrosis. Bladder appears decompressed.">Normal - no hydronephrosis</option>
-          <option value="Unilateral hydronephrosis identified on POCUS.">Hydronephrosis (unilateral)</option>
-          <option value="Bilateral hydronephrosis identified on POCUS.">Hydronephrosis (bilateral)</option>
+          <option value="Mild unilateral hydronephrosis identified on POCUS.">Mild hydronephrosis (unilateral)</option>
+          <option value="Moderate unilateral hydronephrosis identified on POCUS.">Moderate hydronephrosis (unilateral)</option>
+          <option value="Severe unilateral hydronephrosis identified on POCUS.">Severe hydronephrosis (unilateral)</option>
+          <option value="Mild bilateral hydronephrosis identified on POCUS.">Mild hydronephrosis (bilateral)</option>
+          <option value="Moderate bilateral hydronephrosis identified on POCUS.">Moderate hydronephrosis (bilateral)</option>
+          <option value="Severe bilateral hydronephrosis identified on POCUS.">Severe hydronephrosis (bilateral)</option>
           <option value="Bladder significantly distended on POCUS.">Bladder distension</option>
           <option value="Limited renal views.">Limited views</option>
         </select>
@@ -2336,8 +2360,10 @@ function generateOutput() {
     active.forEach(f => {
       if (f.type === 'dropdown' || f.type === 'multi-dropdown' || f.type === 'wells-calculator' || f.type === 'perc-calculator') {
         // Dropdown or calculator field - value stored directly in examFindings
-        if (examFindings[f.id]) {
-          dropdownValues.push(examFindings[f.id]);
+        // Include if value exists and is not empty string
+        const val = examFindings[f.id];
+        if (val && val !== '') {
+          dropdownValues.push(val);
         }
       } else if (examFindings[f.id] === 'abnormal') {
         abnormal.push(f);
@@ -2514,6 +2540,22 @@ function generateOutput() {
   if (examSectionEnabled['extremities']) {
     const extText = moduleSection('extremities');
     output += 'Extremities: ' + (extText || 'Limbs appear symmetrical, no visible swelling, deformity, or rash. Moves all limbs spontaneously.') + '\n';
+    
+    // DVT module sections (if DVT complaint selected)
+    if (complaint === 'dvt') {
+      const dvtInspText = moduleSection('dvt_inspection');
+      const dvtPalpText = moduleSection('dvt_palpation');
+      const dvtMeasText = moduleSection('dvt_measurement');
+      const dvtSpecialText = moduleSection('dvt_special');
+      const dvtPulsesText = moduleSection('dvt_pulses');
+      const dvtRespText = moduleSection('dvt_resp');
+      if (dvtInspText) output += 'Lower Limb Inspection: ' + dvtInspText + '\n';
+      if (dvtPalpText) output += 'Lower Limb Palpation: ' + dvtPalpText + '\n';
+      if (dvtMeasText) output += 'Limb Measurements: ' + dvtMeasText + '\n';
+      if (dvtSpecialText) output += 'DVT Assessment: ' + dvtSpecialText + '\n';
+      if (dvtPulsesText) output += 'Peripheral Pulses: ' + dvtPulsesText + '\n';
+      if (dvtRespText) output += 'Respiratory (PE Screen): ' + dvtRespText + '\n';
+    }
   }
 
   // NEUROLOGICAL
@@ -3628,42 +3670,42 @@ function buildDVTModule(container) {
     general: [
       {id:'dvt_gen', normal:'Alert, oriented, comfortable at rest', abnormal:'In discomfort or distress'}
     ],
-    inspection: [
+    dvt_inspection: [
       {id:'dvt_swelling', normal:'No visible limb swelling or asymmetry', abnormal:'Limb swelling present: ___ (specify limb and location)'},
       {id:'dvt_erythema', normal:'No erythema or skin discolouration', abnormal:'Erythema or skin discolouration present over ___'},
       {id:'dvt_varicose', normal:'No prominent superficial veins or varicosities', abnormal:'Prominent superficial veins or varicosities present'},
       {id:'dvt_wound', normal:'No skin breakdown or ulceration', abnormal:'Skin breakdown or venous ulceration present'}
     ],
-    palpation: [
+    dvt_palpation: [
       {id:'dvt_calf_tender', normal:'No calf tenderness on palpation', abnormal:'Calf tenderness present on ___'},
       {id:'dvt_cord', normal:'No palpable cord or venous thickening', abnormal:'Palpable cord or venous thickening along ___'},
       {id:'dvt_warmth', normal:'Skin temperature equal bilaterally', abnormal:'Increased warmth in affected limb'},
       {id:'dvt_pitting', normal:'No pitting oedema', abnormal:'Pitting oedema present: ___ (grade and distribution)'}
     ],
-    measurement: [
+    dvt_measurement: [
       {id:'dvt_circum', normal:'Calf circumference measured at 10cm below tibial tuberosity: R ___ cm, L ___ cm (difference less than 3cm)', abnormal:'Calf circumference difference greater than 3cm, concern for DVT'}
     ],
-    special: [
+    dvt_special: [
       {id:'dvt_wells', type:'wells-calculator', label:'Wells Score for DVT'},
       {id:'dvt_perc', type:'perc-calculator', label:'PERC Score for PE'}
     ],
-    pulses: [
+    dvt_pulses: [
       {id:'dvt_dorsalis', normal:'Dorsalis pedis and posterior tibial pulses palpable bilaterally', abnormal:'Pulses diminished or absent on ___'},
       {id:'dvt_capref', normal:'Capillary refill less than 2 seconds bilaterally', abnormal:'Capillary refill delayed on ___'}
     ],
-    resp: [
+    dvt_resp: [
       {id:'dvt_resp', normal:'Respiratory rate normal, no tachypnoea or dyspnoea', abnormal:'Tachypnoea or dyspnoea present, PE excluded?'},
       {id:'dvt_sats', normal:'Oxygen saturations normal on room air', abnormal:'Hypoxia present, oxygen required'}
     ]
   };
   const secs = [
     {key:'general',title:'General'},
-    {key:'inspection',title:'Inspection'},
-    {key:'palpation',title:'Palpation'},
-    {key:'measurement',title:'Limb Measurements'},
-    {key:'special',title:'Special Tests / Scores'},
-    {key:'pulses',title:'Pulses / Perfusion'},
-    {key:'resp',title:'Respiratory (PE Screen)'}
+    {key:'dvt_inspection',title:'Inspection'},
+    {key:'dvt_palpation',title:'Palpation'},
+    {key:'dvt_measurement',title:'Limb Measurements'},
+    {key:'dvt_special',title:'Special Tests / Scores'},
+    {key:'dvt_pulses',title:'Pulses / Perfusion'},
+    {key:'dvt_resp',title:'Respiratory (PE Screen)'}
   ];
   container.innerHTML = buildModuleHTML('dvt', 'DVT Rule Out Exam Findings', secs);
 }
