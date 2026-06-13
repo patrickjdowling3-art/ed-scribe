@@ -1078,6 +1078,9 @@
           <option value="dvt">DVT Rule Out</option>
           <option value="rash">Rash</option>
           <option value="urti">Cold / Flu / URTI</option>
+          <option value="nvd">Nausea / Vomiting / Diarrhoea</option>
+          <option value="joint_pain">Joint Pain / Arthritis</option>
+          <option value="substance">Substance Use / Intoxication / Withdrawal</option>
         </select>
       </div>
     </div>
@@ -1745,7 +1748,10 @@ function loadComplaintModule() {
     neck_pain: ['general','heent','neck','neurological','extremities'],
     dvt: ['general','cardiac','extremities','neurological'],
     rash: ['general','skin','neurological','extremities'],
-    urti: ['general','heent','neck','respiratory','skin','neurological']
+    urti: ['general','heent','neck','respiratory','skin','neurological'],
+    nvd: ['general','abdomen'],
+    joint_pain: ['general'],
+    substance: ['general']
   };
   
   // Enable the relevant sections for this complaint
@@ -1774,7 +1780,10 @@ function loadComplaintModule() {
     neck_pain: buildNeckPainModule,
     dvt: buildDVTModule,
     rash: buildRashModule,
-    urti: buildURTIModule
+    urti: buildURTIModule,
+    nvd: buildNVDModule,
+    joint_pain: buildJointPainModule,
+    substance: buildSubstanceModule
   };
   if (modules[val]) modules[val](container);
   updateDot('dot-complaint-module', 'active');
@@ -2633,20 +2642,7 @@ function generateOutput() {
   // SKIN
   if (examSectionEnabled['skin']) {
     if (complaint === 'rash') {
-      const distText = moduleSection('distribution');
-      const morphText = moduleSection('morphology');
-      const charText = moduleSection('characteristics');
-      const rashParts = [distText, morphText, charText].filter(Boolean);
-      const rashSkinText = rashParts.join(' ');
-      output += 'Skin: ' + (rashSkinText || 'No rash identified on examination. Skin intact, appropriate in colour, no visible lesions.') + '\n';
-      const mucousText = moduleSection('mucous');
-      if (mucousText) output += 'Mucous Membranes: ' + mucousText + '\n';
-      const lymphRashText = moduleSection('lymph');
-      if (lymphRashText) output += 'Lymph Nodes: ' + lymphRashText + '\n';
-      const assocText = moduleSection('associated');
-      if (assocText) output += 'Associated Findings: ' + assocText + '\n';
-      const infectText = moduleSection('infection');
-      if (infectText) output += 'Infection / Sepsis Screen: ' + infectText + '\n';
+      output += generateRashOutput(examFindings);
     } else {
       const skinText = moduleSection('skin');
       output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
@@ -2669,6 +2665,15 @@ function generateOutput() {
   // Airway / Angioedema (anaphylaxis module)
   const airwayText = moduleSection('airway');
   if (airwayText) output += 'Airway / Angioedema: ' + airwayText + '\n';
+
+  // NVD module — vomiting, diarrhoea, hydration
+  if (complaint === 'nvd') output += generateNVDOutput(examFindings);
+
+  // Joint pain module — musculoskeletal section
+  if (complaint === 'joint_pain') output += generateJointPainOutput(examFindings);
+
+  // Substance use / intoxication / withdrawal
+  if (complaint === 'substance') output += generateSubstanceOutput(examFindings);
 
   // PSYCHIATRIC
   if (examSectionEnabled['psychiatric']) {
@@ -2739,7 +2744,15 @@ function getComplaintLabel(key) {
     stroke:'Stroke / Focal Neurological Deficit',
     uro:'Urinary Symptoms / Flank Pain',
     palp:'Palpitations',
-    anaphylaxis:'Allergic Reaction / Anaphylaxis'
+    anaphylaxis:'Allergic Reaction / Anaphylaxis',
+    eye:'Eye Complaints',
+    neck_pain:'Neck Pain',
+    dvt:'DVT Rule Out',
+    rash:'Rash',
+    urti:'Cold / Flu / URTI',
+    nvd:'Nausea / Vomiting / Diarrhoea',
+    joint_pain:'Joint Pain / Arthritis',
+    substance:'Substance Use / Intoxication / Withdrawal'
   };
   return map[key] || key;
 }
@@ -3841,6 +3854,346 @@ function buildDVTModule(container) {
 }
 
 // --- RASH ---
+// ============================================================
+// OUTPUT GENERATORS (complaint-specific sentence builders)
+// ============================================================
+
+function generateRashOutput(examFindings) {
+  const locEl  = document.getElementById('sel-rash_location');
+  const locations = locEl ? Array.from(locEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const pattern   = document.getElementById('sel-rash_pattern')?.value || '';
+  const primEl = document.getElementById('sel-rash_primary');
+  const primary   = primEl ? Array.from(primEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const colEl  = document.getElementById('sel-rash_colour');
+  const colours   = colEl ? Array.from(colEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const surEl  = document.getElementById('sel-rash_surface');
+  const surfaces  = surEl ? Array.from(surEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const border    = document.getElementById('sel-rash_border')?.value || '';
+
+  const hasData = locations.length > 0 || primary.length > 0 || colours.length > 0;
+  let skinLine = '';
+
+  if (!hasData) {
+    skinLine = 'No rash identified on examination. Skin intact, appropriate in colour, no visible lesions.';
+  } else {
+    const pluralMap = {
+      macule:'macules', papule:'papules', patch:'patches', plaque:'plaques',
+      nodule:'nodules', vesicle:'vesicles', bulla:'bullae', pustule:'pustules',
+      wheal:'wheals', petechiae:'petechiae', purpura:'purpura'
+    };
+    let desc = 'A ';
+    if (pattern) desc += pattern + ', ';
+    if (colours.length > 0) desc += colours.join(', ') + ' ';
+    if (surfaces.length > 0) desc += surfaces.join(', ') + ' ';
+
+    let primaryStr, usePlural;
+    if (primary.length === 0) {
+      primaryStr = 'rash'; usePlural = false;
+    } else if (primary.length === 1) {
+      const p = primary[0];
+      primaryStr = (p === 'petechiae' || p === 'purpura') ? p : (pluralMap[p] || p + 's');
+      usePlural = (p !== 'purpura');
+    } else {
+      primaryStr = primary.map(p => pluralMap[p] || p + 's').join(' and ');
+      usePlural = true;
+    }
+    const verb = usePlural ? 'are' : 'is';
+
+    let s1 = desc + primaryStr;
+    if (locations.length > 0) s1 += ' ' + verb + ' noted over the ' + joinAnd(locations);
+    else s1 += ' ' + verb + ' present';
+    if (border) s1 += ', with ' + border + ' borders';
+    s1 += '.';
+
+    const chars = [];
+    if (examFindings['rash_blanch'] === 'abnormal') chars.push('Lesions are non-blanching, raising concern for purpura, vasculitis, or meningococcal disease.');
+    else if (examFindings['rash_blanch'] !== 'omit') chars.push('Lesions blanch with pressure.');
+
+    const tender = examFindings['rash_tender'], painful = examFindings['rash_painful'];
+    if (tender === 'abnormal' && painful === 'abnormal') chars.push('The rash is tender and painful to touch.');
+    else if (tender === 'abnormal') chars.push('The rash is tender to palpation.');
+    else if (painful === 'abnormal') chars.push('The rash is painful, raising concern for herpes zoster or cellulitis.');
+    else if (tender !== 'omit') chars.push('Non-tender to palpation.');
+
+    if (examFindings['rash_pruritic'] === 'abnormal') chars.push('Pruritic, with excoriations evident.');
+    else if (examFindings['rash_pruritic'] !== 'omit') chars.push('Non-pruritic.');
+
+    if (examFindings['rash_nikolsky'] === 'abnormal') chars.push('Nikolsky sign positive, suggesting significant epidermal fragility.');
+    else if (examFindings['rash_nikolsky'] !== 'omit') chars.push('Nikolsky sign negative.');
+
+    skinLine = [s1, ...chars].join(' ');
+  }
+
+  let out = 'Skin: ' + skinLine + '\n';
+
+  // Mucous membranes
+  const mucParts = [];
+  if (examFindings['rash_oral'] !== 'omit') {
+    if (examFindings['rash_oral'] === 'abnormal') mucParts.push('oral mucosal involvement with erosions or ulceration');
+    else mucParts.push('oral mucosa clear, no lesions');
+  }
+  if (examFindings['rash_conj'] !== 'omit') {
+    if (examFindings['rash_conj'] === 'abnormal') mucParts.push('conjunctival injection or involvement');
+    else mucParts.push('conjunctivae normal');
+  }
+  if (examFindings['rash_genital'] !== 'omit') {
+    if (examFindings['rash_genital'] === 'abnormal') mucParts.push('genital mucosal involvement documented');
+    else mucParts.push('genital examination deferred or normal');
+  }
+  if (mucParts.length > 0) out += 'Mucous Membranes: ' + capitalizeFirst(mucParts[0]) + (mucParts.length > 1 ? '; ' + mucParts.slice(1).join('; ') : '') + '.\n';
+
+  // Lymph nodes
+  if (examFindings['rash_nodes'] !== 'omit') {
+    if (examFindings['rash_nodes'] === 'abnormal') out += 'Lymph Nodes: Lymphadenopathy present.\n';
+    else out += 'Lymph Nodes: No lymphadenopathy.\n';
+  }
+
+  // Associated findings
+  const assocParts = [];
+  if (examFindings['rash_joint'] !== 'omit') {
+    if (examFindings['rash_joint'] === 'abnormal') assocParts.push('joint swelling or arthritis noted');
+    else assocParts.push('no joint swelling or arthritis');
+  }
+  if (examFindings['rash_photo'] !== 'omit') {
+    if (examFindings['rash_photo'] === 'abnormal') assocParts.push('photosensitivity or photo-distributed pattern present');
+    else assocParts.push('no photosensitivity');
+  }
+  if (examFindings['rash_angioedema'] !== 'omit') {
+    if (examFindings['rash_angioedema'] === 'abnormal') assocParts.push('angioedema present, airway being monitored');
+    else assocParts.push('no angioedema or facial swelling');
+  }
+  if (assocParts.length > 0) out += 'Associated Findings: ' + capitalizeFirst(assocParts[0]) + (assocParts.length > 1 ? '; ' + assocParts.slice(1).join('; ') : '') + '.\n';
+
+  // Infection / sepsis screen
+  const infectParts = [];
+  if (examFindings['rash_meningism'] !== 'omit') {
+    if (examFindings['rash_meningism'] === 'abnormal') infectParts.push('meningismus present — meningitis is being actively excluded');
+    else infectParts.push('no meningismus or neck stiffness');
+  }
+  if (examFindings['rash_sepsis'] !== 'omit') {
+    if (examFindings['rash_sepsis'] === 'abnormal') infectParts.push('patient appears septic — immediate resuscitation is underway');
+    else infectParts.push('no systemic toxicity or septic appearance');
+  }
+  if (infectParts.length > 0) out += 'Infection / Sepsis Screen: ' + capitalizeFirst(infectParts[0]) + (infectParts.length > 1 ? '; ' + infectParts.slice(1).join('; ') : '') + '.\n';
+
+  return out;
+}
+
+function generateNVDOutput(examFindings) {
+  let out = '';
+
+  // Vomiting
+  const nvdVomPresent = examFindings['nvd_vom_present'];
+  const nvdVomFreq    = document.getElementById('sel-nvd_vom_freq')?.value || '';
+  const nvdVomColEl   = document.getElementById('sel-nvd_vom_color');
+  const nvdVomCols    = nvdVomColEl ? Array.from(nvdVomColEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const nvdVomBlood   = document.getElementById('sel-nvd_vom_blood')?.value || '';
+
+  if (nvdVomPresent !== 'omit' && (nvdVomFreq || nvdVomCols.length > 0 || nvdVomPresent === 'abnormal')) {
+    const vomParts = [];
+    if (nvdVomFreq && nvdVomCols.length > 0)
+      vomParts.push(capitalizeFirst(nvdVomFreq) + ' of ' + nvdVomCols.join(', ') + ' emesis');
+    else if (nvdVomFreq)
+      vomParts.push(capitalizeFirst(nvdVomFreq) + ' of vomiting');
+    else if (nvdVomCols.length > 0)
+      vomParts.push(capitalizeFirst(nvdVomCols.join(', ')) + ' emesis noted');
+    if (nvdVomBlood === 'no blood identified') vomParts.push('no blood in emesis');
+    else if (nvdVomBlood) vomParts.push(nvdVomBlood + ' present');
+    if (nvdVomPresent === 'abnormal') vomParts.push('active vomiting witnessed during assessment');
+    if (vomParts.length > 0) out += 'Vomiting: ' + capitalizeFirst(vomParts.join('. ')) + '.\n';
+  }
+
+  // Diarrhoea
+  const nvdDiaPresent = examFindings['nvd_dia_present'];
+  const nvdDiaFreq    = document.getElementById('sel-nvd_dia_freq')?.value || '';
+  const nvdDiaCons    = document.getElementById('sel-nvd_dia_consistency')?.value || '';
+  const nvdDiaColEl   = document.getElementById('sel-nvd_dia_color');
+  const nvdDiaCols    = nvdDiaColEl ? Array.from(nvdDiaColEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const nvdDiaBlood   = document.getElementById('sel-nvd_dia_blood')?.value || '';
+
+  if (nvdDiaPresent !== 'omit' && (nvdDiaFreq || nvdDiaCols.length > 0 || nvdDiaPresent === 'abnormal')) {
+    const descParts = [];
+    if (nvdDiaCons) descParts.push(nvdDiaCons);
+    if (nvdDiaCols.length > 0) descParts.push(nvdDiaCols.join(', '));
+    const diaParts = [];
+    if (nvdDiaFreq && descParts.length > 0)
+      diaParts.push(capitalizeFirst(nvdDiaFreq) + ' of ' + descParts.join(', ') + ' stool');
+    else if (nvdDiaFreq)
+      diaParts.push(capitalizeFirst(nvdDiaFreq) + ' of diarrhoea');
+    else if (descParts.length > 0)
+      diaParts.push(capitalizeFirst(descParts.join(', ')) + ' stool noted');
+    if (nvdDiaBlood === 'no blood identified') diaParts.push('no blood in stool');
+    else if (nvdDiaBlood) diaParts.push(nvdDiaBlood);
+    if (nvdDiaPresent === 'abnormal') diaParts.push('active diarrhoea during assessment');
+    if (diaParts.length > 0) out += 'Diarrhoea: ' + capitalizeFirst(diaParts.join('. ')) + '.\n';
+  }
+
+  // Hydration assessment
+  const hydParts = [];
+  if (examFindings['nvd_mm']     !== 'omit') hydParts.push(examFindings['nvd_mm']     === 'abnormal' ? 'mucous membranes dry' : 'mucous membranes moist');
+  if (examFindings['nvd_turgor'] !== 'omit') hydParts.push(examFindings['nvd_turgor'] === 'abnormal' ? 'skin turgor reduced with tenting' : 'skin turgor normal');
+  if (examFindings['nvd_cap']    !== 'omit') hydParts.push(examFindings['nvd_cap']    === 'abnormal' ? 'capillary refill prolonged' : 'capillary refill brisk');
+  if (examFindings['nvd_eyes']   !== 'omit' && examFindings['nvd_eyes'] === 'abnormal') hydParts.push('sunken eyes consistent with significant dehydration');
+  if (hydParts.length > 0) out += 'Hydration: ' + capitalizeFirst(hydParts[0]) + (hydParts.length > 1 ? '; ' + hydParts.slice(1).join('; ') : '') + '.\n';
+
+  return out;
+}
+
+function generateJointPainOutput(examFindings) {
+  const jpJointsEl = document.getElementById('sel-jp_joints');
+  const jpJoints   = jpJointsEl ? Array.from(jpJointsEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const jpDist     = document.getElementById('sel-jp_distribution')?.value || '';
+  const parts      = [];
+
+  // Opening: affected joint(s) and distribution
+  if (jpDist && jpJoints.length > 0)
+    parts.push(capitalizeFirst(jpDist) + ' involving the ' + joinAnd(jpJoints) + '.');
+  else if (jpJoints.length > 0)
+    parts.push('Examination of the ' + joinAnd(jpJoints) + '.');
+  else if (jpDist)
+    parts.push(capitalizeFirst(jpDist) + '.');
+
+  // Inspection
+  const inspAbn = [], inspNrm = [];
+  if (examFindings['jp_swelling']      === 'abnormal') inspAbn.push('visible joint swelling');
+  else if (examFindings['jp_swelling'] !== 'omit')     inspNrm.push('no visible swelling');
+  if (examFindings['jp_erythema']      === 'abnormal') inspAbn.push('periarticular erythema');
+  else if (examFindings['jp_erythema'] !== 'omit')     inspNrm.push('no erythema');
+  if (examFindings['jp_deformity']     === 'abnormal') inspAbn.push('visible deformity or malalignment');
+  else if (examFindings['jp_deformity']!== 'omit')     inspNrm.push('no deformity');
+  if (examFindings['jp_muscle_wasting']=== 'abnormal') inspAbn.push('periarticular muscle wasting');
+  const inspAll = [...inspAbn, ...inspNrm];
+  if (inspAll.length > 0) parts.push('On inspection: ' + joinAnd(inspAll) + '.');
+
+  // Palpation
+  const palpAbn = [], palpNrm = [];
+  if (examFindings['jp_warmth']       === 'abnormal') palpAbn.push('increased warmth');
+  else if (examFindings['jp_warmth']  !== 'omit')     palpNrm.push('no increased warmth');
+  if (examFindings['jp_effusion']     === 'abnormal') palpAbn.push('a palpable effusion');
+  else if (examFindings['jp_effusion']!== 'omit')     palpNrm.push('no effusion');
+  if (examFindings['jp_joint_tender'] === 'abnormal') palpAbn.push('joint line tenderness');
+  else if (examFindings['jp_joint_tender'] !== 'omit') palpNrm.push('no joint line tenderness');
+  if (examFindings['jp_crepitus']     === 'abnormal') palpAbn.push('crepitus on movement');
+  else if (examFindings['jp_crepitus']!== 'omit')     palpNrm.push('no crepitus');
+  if (examFindings['jp_peri_tender']  === 'abnormal') palpAbn.push('periarticular tenderness suggesting a tendon or bursal source rather than intra-articular pathology');
+  const palpAll = [...palpAbn, ...palpNrm];
+  if (palpAll.length > 0) parts.push('Palpation reveals ' + joinAnd(palpAll) + '.');
+
+  // Range of motion
+  const romParts = [];
+  if (examFindings['jp_rom_active']   === 'abnormal') romParts.push('active range of motion is restricted or painful');
+  else if (examFindings['jp_rom_active'] !== 'omit')  romParts.push('active range of motion is preserved and pain-free');
+  if (examFindings['jp_rom_passive']  === 'abnormal') romParts.push('passive range of motion is also reduced');
+  else if (examFindings['jp_rom_passive'] !== 'omit') romParts.push('passive range of motion is preserved');
+  if (examFindings['jp_pain_arc']     === 'abnormal') romParts.push('a painful arc is present, suggesting rotator cuff or subacromial pathology');
+  if (examFindings['jp_end_range']    === 'abnormal') romParts.push('laxity on stress testing suggests ligamentous injury');
+  else if (examFindings['jp_end_range'] !== 'omit')   romParts.push('no laxity on stress testing');
+  if (romParts.length > 0) parts.push(capitalizeFirst(joinAnd(romParts)) + '.');
+
+  // Functional
+  if (examFindings['jp_weight_bear'] === 'abnormal') parts.push('Unable to weight-bear or markedly antalgic gait.');
+  else if (examFindings['jp_weight_bear'] !== 'omit') parts.push('Weight-bearing intact with normal gait.');
+  if (examFindings['jp_function']    === 'abnormal') parts.push('Functional grip or movement significantly impaired.');
+
+  // Systemic
+  const systParts = [];
+  if (examFindings['jp_fever_sign']    === 'abnormal') systParts.push('febrile or systemically toxic — septic arthritis must be excluded');
+  if (examFindings['jp_skin_psoriasis']=== 'abnormal') systParts.push('psoriatic plaques noted — psoriatic arthropathy?');
+  if (examFindings['jp_eye_conjunct']  === 'abnormal') systParts.push('conjunctival injection present — reactive arthritis or uveitis?');
+  if (examFindings['jp_tophi']         === 'abnormal') systParts.push('tophi present, consistent with gout');
+  if (examFindings['jp_nodes']         === 'abnormal') systParts.push('regional lymphadenopathy');
+  if (systParts.length > 0) parts.push('Systemic findings: ' + capitalizeFirst(systParts.join('; ')) + '.');
+
+  if (parts.length === 0) return 'Musculoskeletal: Full range of motion, no effusion, swelling, or tenderness.\n';
+  return 'Musculoskeletal: ' + parts.join(' ') + '\n';
+}
+
+function generateSubstanceOutput(examFindings) {
+  const subTypeEl   = document.getElementById('sel-sub_type');
+  const subTypes    = subTypeEl ? Array.from(subTypeEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const subSyndrome = document.getElementById('sel-sub_syndrome')?.value   || '';
+  const subConsc    = document.getElementById('sel-sub_consciousness')?.value || '';
+  const subHR       = document.getElementById('sel-sub_hr_state')?.value   || '';
+  const subBP       = document.getElementById('sel-sub_bp_state')?.value   || '';
+  const subTemp     = document.getElementById('sel-sub_temp_state')?.value || '';
+  const subRR       = document.getElementById('sel-sub_rr_state')?.value   || '';
+  const subPupils   = document.getElementById('sel-sub_pupils')?.value     || '';
+  const subSpeech   = document.getElementById('sel-sub_speech')?.value     || '';
+  const subGait     = document.getElementById('sel-sub_gait')?.value       || '';
+  const subAffect   = document.getElementById('sel-sub_affect')?.value     || '';
+  const subSmell    = document.getElementById('sel-sub_smell')?.value      || '';
+  const subCIWA     = document.getElementById('sel-sub_ciwa')?.value       || '';
+  const subCOWS     = document.getElementById('sel-sub_cows')?.value       || '';
+
+  let out = 'Toxicological Assessment:\n';
+
+  // Opening: syndrome and substance(s)
+  if (subSyndrome && subTypes.length > 0)
+    out += capitalizeFirst(subSyndrome) + ' involving ' + joinAnd(subTypes) + '.\n';
+  else if (subSyndrome)
+    out += capitalizeFirst(subSyndrome) + '.\n';
+  else if (subTypes.length > 0)
+    out += 'Suspected involvement of ' + joinAnd(subTypes) + '.\n';
+
+  // Level of consciousness
+  if (subConsc) out += 'Consciousness: ' + capitalizeFirst(subConsc) + '.\n';
+  else if (examFindings['sub_gen'] === 'normal') out += 'Consciousness: Alert and oriented.\n';
+  else if (examFindings['sub_gen'] === 'abnormal') out += 'Consciousness: Reduced level of consciousness or responsiveness.\n';
+
+  // Vital signs
+  const vsAll = [subHR, subBP, subTemp, subRR].filter(Boolean);
+  if (vsAll.length > 0) out += 'Vital signs: ' + capitalizeFirst(vsAll.join('; ')) + '.\n';
+
+  // Ocular
+  const ocParts = [];
+  if (subPupils) ocParts.push(capitalizeFirst(subPupils));
+  if (examFindings['sub_nystagmus'] === 'abnormal') ocParts.push('nystagmus present');
+  else if (examFindings['sub_nystagmus'] !== 'omit' && subPupils) ocParts.push('no nystagmus');
+  if (ocParts.length > 0) out += 'Ocular: ' + ocParts.join('; ') + '.\n';
+
+  // Neuromotor
+  const nParts = [];
+  if (subSpeech) nParts.push(capitalizeFirst(subSpeech));
+  if (subGait)   nParts.push(capitalizeFirst(subGait));
+  if (examFindings['sub_tremor'] === 'abnormal') nParts.push('Tremor observed at rest or on movement');
+  else if (examFindings['sub_tremor'] !== 'omit') nParts.push('No tremor');
+  if (nParts.length > 0) out += nParts.join('. ') + '.\n';
+
+  // Behaviour and affect
+  const bParts = [];
+  if (subAffect) bParts.push(capitalizeFirst(subAffect));
+  if (examFindings['sub_hallucinations'] === 'abnormal') bParts.push('Hallucinations are present (auditory, visual, or tactile)');
+  else if (examFindings['sub_hallucinations'] !== 'omit') bParts.push('No hallucinations elicited or witnessed');
+  if (bParts.length > 0) out += 'Behaviour / affect: ' + bParts.join('. ') + '.\n';
+
+  // Skin and odour
+  const skinParts = [];
+  if (examFindings['sub_diaphoresis']    === 'abnormal') skinParts.push('diaphoresis present');
+  else if (examFindings['sub_diaphoresis'] !== 'omit')   skinParts.push('skin dry');
+  if (examFindings['sub_pallor']         === 'abnormal') skinParts.push('pallor or cyanosis noted');
+  if (examFindings['sub_injection_sites']=== 'abnormal') skinParts.push('injection sites or track marks visible');
+  else if (examFindings['sub_injection_sites'] !== 'omit') skinParts.push('no injection sites or track marks');
+  if (examFindings['sub_piloerection']   === 'abnormal') skinParts.push('piloerection noted, consistent with opioid withdrawal');
+  if (examFindings['sub_perioral']       === 'abnormal') skinParts.push('perioral or perinasal irritation, consistent with inhalant use');
+  if (subSmell && subSmell !== 'no unusual odour detected') skinParts.push(subSmell);
+  else if (subSmell === 'no unusual odour detected') skinParts.push('no unusual odour detected');
+  if (skinParts.length > 0) out += 'Skin / odour: ' + capitalizeFirst(skinParts[0]) + (skinParts.length > 1 ? '; ' + skinParts.slice(1).join('; ') : '') + '.\n';
+
+  // Withdrawal signs
+  const wdParts = [];
+  if (examFindings['sub_wd_anxiety']  === 'abnormal') wdParts.push('anxiety and psychomotor restlessness');
+  if (examFindings['sub_wd_gi']       === 'abnormal') wdParts.push('nausea, vomiting, or diarrhoea consistent with withdrawal');
+  if (examFindings['sub_wd_autonomic']=== 'abnormal') wdParts.push('autonomic instability (tachycardia, hypertension, diaphoresis)');
+  if (examFindings['sub_seizure']     === 'abnormal') wdParts.push('seizure activity during this presentation');
+  if (wdParts.length > 0) out += 'Withdrawal signs: ' + capitalizeFirst(joinAnd(wdParts)) + '.\n';
+  if (subCIWA && subCIWA !== 'not applicable') out += 'Alcohol withdrawal severity: ' + capitalizeFirst(subCIWA) + '.\n';
+  if (subCOWS && subCOWS !== 'not applicable') out += 'Opioid withdrawal severity: ' + capitalizeFirst(subCOWS) + '.\n';
+
+  return out;
+}
+
+// ============================================================
+
 function buildRashModule(container) {
   window.examData = window.examData || {};
   window.examData.rash = {
@@ -3958,6 +4311,251 @@ function listFindings(arr) {
   if (arr.length === 1) return arr[0];
   if (arr.length === 2) return arr[0] + ' or ' + arr[1];
   return arr.slice(0,-1).join(', ') + ', or ' + arr[arr.length-1];
+}
+
+function joinAnd(arr) {
+  if (arr.length === 0) return '';
+  if (arr.length === 1) return arr[0];
+  if (arr.length === 2) return arr[0] + ' and ' + arr[1];
+  return arr.slice(0,-1).join(', ') + ', and ' + arr[arr.length-1];
+}
+
+// --- NAUSEA / VOMITING / DIARRHOEA ---
+function buildNVDModule(container) {
+  window.examData = window.examData || {};
+  window.examData.nvd = {
+    general: [
+      {id:'nvd_gen',    normal:'Alert, oriented, comfortable, no acute distress', abnormal:'Appears unwell, pale, or in significant distress'},
+      {id:'nvd_vitals', normal:'Vital signs stable, afebrile',                    abnormal:'Febrile, tachycardic, or haemodynamically unstable'}
+    ],
+    vomiting: [
+      {id:'nvd_vom_present', normal:'No active vomiting at time of assessment', abnormal:'Actively vomiting during assessment'},
+      {id:'nvd_vom_freq',  type:'dropdown',       label:'Vomiting frequency (per day)',  options:['1 episode','2–3 episodes','4–6 episodes','7–10 episodes','more than 10 episodes']},
+      {id:'nvd_vom_color', type:'multi-dropdown', label:'Emesis appearance',             options:['clear / watery','yellow / bilious','brown / feculent','coffee-ground coloured','frankly bloody']},
+      {id:'nvd_vom_blood', type:'dropdown',       label:'Blood in emesis',               options:['no blood identified','fresh red blood (haematemesis)','coffee-ground material (altered blood)','mixed fresh and altered blood']}
+    ],
+    diarrhea: [
+      {id:'nvd_dia_present',     normal:'No diarrhoea at time of assessment', abnormal:'Active diarrhoea documented during assessment'},
+      {id:'nvd_dia_freq',        type:'dropdown',       label:'Bowel frequency (per day)',  options:['1 episode','2–3 times','4–6 times','7–10 times','more than 10 times']},
+      {id:'nvd_dia_consistency', type:'dropdown',       label:'Stool consistency',          options:['watery / liquid','loose / unformed','semi-formed but looser than normal']},
+      {id:'nvd_dia_color',       type:'multi-dropdown', label:'Stool colour',               options:['yellow','brown','green','black / tarry (melena)','bright red']},
+      {id:'nvd_dia_blood',       type:'dropdown',       label:'Blood in stool',             options:['no blood identified','bright red blood per rectum (BRBPR)','melena (black tarry stool)','blood mixed throughout stool']}
+    ],
+    abdomen: [
+      {id:'nvd_abd_tender',    normal:'Soft, non-tender to palpation',                             abnormal:'Tenderness on abdominal palpation'},
+      {id:'nvd_abd_guard',     normal:'No guarding or rigidity',                                    abnormal:'Guarding or rigidity present'},
+      {id:'nvd_abd_rebound',   normal:'No rebound tenderness',                                      abnormal:'Rebound tenderness present'},
+      {id:'nvd_abd_distension',normal:'Non-distended',                                              abnormal:'Abdominal distension noted'},
+      {id:'nvd_abd_bs',        normal:'Bowel sounds present and normoactive',                       abnormal:'Bowel sounds abnormal'},
+      {id:'nvd_abd_organ',     normal:'No organomegaly or palpable masses',                         abnormal:'Organomegaly or mass palpable'},
+      {id:'nvd_abd_epigastric',normal:'No epigastric tenderness',                                   abnormal:'Epigastric tenderness present'},
+      {id:'nvd_abd_rlq',       normal:'No right lower quadrant tenderness',                         abnormal:'Right lower quadrant tenderness (appendicitis excluded?)'}
+    ],
+    hydration: [
+      {id:'nvd_mm',     normal:'Mucous membranes moist',                     abnormal:'Mucous membranes dry'},
+      {id:'nvd_turgor', normal:'Skin turgor normal',                          abnormal:'Skin turgor reduced, tenting noted'},
+      {id:'nvd_cap',    normal:'Capillary refill brisk, less than 2 seconds', abnormal:'Capillary refill prolonged (greater than 2 seconds)'},
+      {id:'nvd_eyes',   normal:'Eyes appear normal, no sunkenness',           abnormal:'Sunken eyes noted, signs of significant dehydration'}
+    ]
+  };
+  const secs = [
+    {key:'general',   title:'General / Vitals'},
+    {key:'vomiting',  title:'Vomiting'},
+    {key:'diarrhea',  title:'Diarrhoea'},
+    {key:'abdomen',   title:'Abdominal Exam'},
+    {key:'hydration', title:'Hydration Assessment'}
+  ];
+  container.innerHTML = buildModuleHTML('nvd', 'Nausea / Vomiting / Diarrhoea Exam Findings', secs);
+}
+
+// --- JOINT PAIN / ARTHRITIS ---
+function buildJointPainModule(container) {
+  window.examData = window.examData || {};
+  window.examData.joint_pain = {
+    general: [
+      {id:'jp_gen',    normal:'Alert, oriented, comfortable',            abnormal:'Appears unwell or in significant pain'},
+      {id:'jp_vitals', normal:'Vital signs stable, afebrile',            abnormal:'Febrile or haemodynamically unstable (septic arthritis excluded?)'}
+    ],
+    joint_selection: [
+      {id:'jp_joints', type:'multi-dropdown', label:'Affected joint(s)', options:[
+        'shoulder (right)','shoulder (left)','elbow (right)','elbow (left)',
+        'wrist (right)','wrist (left)',
+        'metacarpophalangeal joints (right)','metacarpophalangeal joints (left)',
+        'proximal interphalangeal joints (right)','proximal interphalangeal joints (left)',
+        'distal interphalangeal joints (right)','distal interphalangeal joints (left)',
+        'hip (right)','hip (left)','knee (right)','knee (left)',
+        'ankle (right)','ankle (left)',
+        'metatarsophalangeal joints (right)','metatarsophalangeal joints (left)',
+        'first metatarsophalangeal joint / big toe (right)','first metatarsophalangeal joint / big toe (left)',
+        'sacroiliac joint (right)','sacroiliac joint (left)',
+        'sternoclavicular joint','acromioclavicular joint (right)','acromioclavicular joint (left)',
+        'temporomandibular joint'
+      ]},
+      {id:'jp_distribution', type:'dropdown', label:'Arthropathy distribution', options:[
+        'monoarticular (single joint)','oligoarticular (2–4 joints)',
+        'polyarticular (5 or more joints)','symmetric bilateral pattern',
+        'asymmetric pattern','migratory arthropathy'
+      ]}
+    ],
+    inspection: [
+      {id:'jp_swelling',      normal:'No visible joint swelling',                  abnormal:'Visible joint swelling noted'},
+      {id:'jp_erythema',      normal:'No periarticular erythema',                  abnormal:'Periarticular erythema present'},
+      {id:'jp_deformity',     normal:'No visible deformity or malalignment',       abnormal:'Visible deformity or malalignment noted'},
+      {id:'jp_muscle_wasting',normal:'No periarticular muscle wasting',            abnormal:'Periarticular muscle wasting present'}
+    ],
+    palpation: [
+      {id:'jp_warmth',      normal:'No increased warmth over the affected joint(s)',             abnormal:'Increased warmth over the affected joint(s)'},
+      {id:'jp_effusion',    normal:'No joint effusion appreciated',                              abnormal:'Joint effusion palpable'},
+      {id:'jp_joint_tender',normal:'No joint line tenderness',                                   abnormal:'Joint line tenderness on palpation'},
+      {id:'jp_peri_tender', normal:'No periarticular (tendon or bursal) tenderness',             abnormal:'Periarticular tenderness — consistent with tendon or bursal pathology rather than intra-articular source'},
+      {id:'jp_crepitus',    normal:'No crepitus on movement',                                    abnormal:'Crepitus appreciated on movement'}
+    ],
+    range_of_motion: [
+      {id:'jp_rom_active',  normal:'Active range of motion preserved and pain-free',   abnormal:'Active range of motion restricted or painful'},
+      {id:'jp_rom_passive', normal:'Passive range of motion preserved',                abnormal:'Passive range of motion reduced'},
+      {id:'jp_pain_arc',    normal:'No painful arc on range of motion',                abnormal:'Painful arc present — rotator cuff or subacromial pathology?'},
+      {id:'jp_end_range',   normal:'No laxity on end-range stress testing in any plane',abnormal:'Laxity on stress testing, raising concern for ligamentous injury'}
+    ],
+    functional: [
+      {id:'jp_weight_bear',normal:'Weight-bearing intact, gait normal',                abnormal:'Unable to weight-bear or markedly antalgic gait'},
+      {id:'jp_function',   normal:'Functional grip and movement preserved',             abnormal:'Functional grip or movement significantly impaired'}
+    ],
+    systemic: [
+      {id:'jp_fever_sign',    normal:'Afebrile, no systemic toxicity',                 abnormal:'Febrile or systemically toxic — septic arthritis must be excluded'},
+      {id:'jp_skin_psoriasis',normal:'No psoriatic plaques or skin rash',              abnormal:'Psoriatic plaques or skin rash noted — psoriatic arthropathy?'},
+      {id:'jp_eye_conjunct',  normal:'No conjunctival injection or eye redness',       abnormal:'Conjunctival injection present — reactive arthritis or uveitis?'},
+      {id:'jp_tophi',         normal:'No tophi or uric acid deposits noted',           abnormal:'Tophi present — consistent with gout'},
+      {id:'jp_nodes',         normal:'No regional lymphadenopathy',                    abnormal:'Regional lymphadenopathy present'}
+    ]
+  };
+  const secs = [
+    {key:'general',         title:'General / Vitals'},
+    {key:'joint_selection', title:'Joint(s) Affected'},
+    {key:'inspection',      title:'Inspection'},
+    {key:'palpation',       title:'Palpation'},
+    {key:'range_of_motion', title:'Range of Motion'},
+    {key:'functional',      title:'Functional Assessment'},
+    {key:'systemic',        title:'Systemic Signs'}
+  ];
+  container.innerHTML = buildModuleHTML('joint_pain', 'Joint Pain / Arthritis Exam Findings', secs);
+}
+
+// --- SUBSTANCE USE / INTOXICATION / WITHDRAWAL ---
+function buildSubstanceModule(container) {
+  window.examData = window.examData || {};
+  window.examData.substance = {
+    general: [
+      {id:'sub_gen',     normal:'Alert and engaged, no acute distress',          abnormal:'Reduced level of consciousness or responsiveness'},
+      {id:'sub_distress',normal:'Cooperative with assessment',                    abnormal:'Agitated, combative, or uncooperative with assessment'}
+    ],
+    substances: [
+      {id:'sub_type', type:'multi-dropdown', label:'Substance(s) involved (suspected or confirmed)', options:[
+        'alcohol (ethanol)','cannabis / THC',
+        'opioids (heroin / fentanyl / oxycodone / morphine)',
+        'cocaine','methamphetamine / amphetamines','benzodiazepines',
+        'GHB / GBL','MDMA / ecstasy',
+        'hallucinogens (LSD / psilocybin / mescaline)',
+        'ketamine / PCP / dissociatives','inhalants / volatile solvents',
+        'synthetic cannabinoids (K2 / Spice)','multiple substances / polypharmacy'
+      ]},
+      {id:'sub_syndrome', type:'dropdown', label:'Clinical syndrome', options:[
+        'acute intoxication','withdrawal syndrome',
+        'mixed intoxication and withdrawal','unclear / suspected toxidrome'
+      ]}
+    ],
+    consciousness: [
+      {id:'sub_consciousness', type:'dropdown', label:'Level of consciousness', options:[
+        'alert and fully oriented to person, place, and time',
+        'alert but confused or disoriented',
+        'drowsy but rousable to voice',
+        'drowsy but rousable to stimulation only',
+        'responsive to painful stimulation only',
+        'unresponsive'
+      ]}
+    ],
+    vital_signs: [
+      {id:'sub_hr_state',  type:'dropdown', label:'Heart rate',              options:['heart rate normal and regular','tachycardia present','bradycardia present','irregular rate']},
+      {id:'sub_bp_state',  type:'dropdown', label:'Blood pressure',          options:['blood pressure within normal limits','hypertension present','hypotension present']},
+      {id:'sub_temp_state',type:'dropdown', label:'Temperature',             options:['afebrile','low-grade fever','hyperthermia (temperature above 38.5°C)','hypothermia present']},
+      {id:'sub_rr_state',  type:'dropdown', label:'Respiratory rate / effort',options:['respiratory rate normal, effort unlaboured','respiratory depression present (rate below 12)','tachypnoea present','agonal or irregular respirations']}
+    ],
+    pupils: [
+      {id:'sub_pupils', type:'dropdown', label:'Pupils', options:[
+        'pupils equal and reactive to light bilaterally (PERL)',
+        'miosis — pinpoint pupils (less than 2 mm)',
+        'mydriasis — dilated pupils (greater than 6 mm)',
+        'pupils sluggishly reactive',
+        'pupils unequal (anisocoria)',
+        'pupils fixed and dilated'
+      ]},
+      {id:'sub_nystagmus', normal:'No nystagmus', abnormal:'Nystagmus present'}
+    ],
+    speech_gait: [
+      {id:'sub_speech', type:'dropdown', label:'Speech', options:[
+        'clear and coherent','slurred speech','pressured and rapid speech',
+        'disorganized or incoherent speech','mute or minimally verbal'
+      ]},
+      {id:'sub_gait', type:'dropdown', label:'Gait / coordination', options:[
+        'gait normal, coordination intact',
+        'mildly unsteady or broad-based gait',
+        'markedly ataxic, unable to walk unassisted',
+        'unable to stand or assess safely'
+      ]},
+      {id:'sub_tremor', normal:'No tremor observed at rest or on movement', abnormal:'Tremor present at rest or on movement'}
+    ],
+    behaviour: [
+      {id:'sub_affect', type:'dropdown', label:'Behaviour / affect', options:[
+        'calm and cooperative','disinhibited but cooperative',
+        'agitated and uncooperative','paranoid or threatening behaviour',
+        'labile affect','euphoric','dysphoric or depressed',
+        'dissociated or detached from environment'
+      ]},
+      {id:'sub_hallucinations', normal:'No hallucinations reported or witnessed', abnormal:'Hallucinations present — auditory, visual, or tactile'}
+    ],
+    skin_signs: [
+      {id:'sub_diaphoresis',    normal:'Skin dry, no diaphoresis',                      abnormal:'Diaphoresis present'},
+      {id:'sub_pallor',         normal:'Skin normal colour, no pallor or cyanosis',      abnormal:'Pallor or cyanosis present'},
+      {id:'sub_injection_sites',normal:'No injection sites or track marks visible',      abnormal:'Injection sites or track marks visible'},
+      {id:'sub_piloerection',   normal:'No piloerection',                                abnormal:'Piloerection noted — consistent with opioid withdrawal'},
+      {id:'sub_perioral',       normal:'No perioral or perinasal rash or irritation',    abnormal:'Perioral or perinasal rash or irritation — consistent with inhalant use'},
+      {id:'sub_smell',          type:'dropdown', label:'Odour', options:[
+        'no unusual odour detected','alcohol odour on breath',
+        'cannabis smell on clothing or breath','solvent or chemical odour'
+      ]}
+    ],
+    withdrawal_signs: [
+      {id:'sub_wd_anxiety',  normal:'No withdrawal anxiety or psychomotor restlessness',          abnormal:'Anxiety and psychomotor restlessness consistent with withdrawal'},
+      {id:'sub_wd_gi',       normal:'No nausea, vomiting, or diarrhoea consistent with withdrawal',abnormal:'Nausea, vomiting, or diarrhoea consistent with withdrawal syndrome'},
+      {id:'sub_wd_autonomic',normal:'No autonomic instability',                                    abnormal:'Autonomic instability present — tachycardia, hypertension, diaphoresis'},
+      {id:'sub_seizure',     normal:'No seizure activity witnessed or reported in this episode',  abnormal:'Seizure activity witnessed or reported in this episode'},
+      {id:'sub_ciwa', type:'dropdown', label:'Alcohol withdrawal severity (CIWA-Ar estimate)', options:[
+        'not applicable',
+        'mild withdrawal (CIWA-Ar less than 10)',
+        'moderate withdrawal (CIWA-Ar 10–15)',
+        'severe withdrawal (CIWA-Ar greater than 15)',
+        'delirium tremens present'
+      ]},
+      {id:'sub_cows', type:'dropdown', label:'Opioid withdrawal severity (COWS estimate)', options:[
+        'not applicable',
+        'mild withdrawal (COWS 5–12)',
+        'moderate withdrawal (COWS 13–24)',
+        'moderately severe withdrawal (COWS 25–36)',
+        'severe withdrawal (COWS greater than 36)'
+      ]}
+    ]
+  };
+  const secs = [
+    {key:'general',         title:'General / Appearance'},
+    {key:'substances',      title:'Substance(s) / Syndrome'},
+    {key:'consciousness',   title:'Level of Consciousness'},
+    {key:'vital_signs',     title:'Vital Signs'},
+    {key:'pupils',          title:'Pupils / Nystagmus'},
+    {key:'speech_gait',     title:'Speech / Gait / Coordination'},
+    {key:'behaviour',       title:'Behaviour / Affect'},
+    {key:'skin_signs',      title:'Skin / Odour'},
+    {key:'withdrawal_signs',title:'Withdrawal Signs'}
+  ];
+  container.innerHTML = buildModuleHTML('substance', 'Substance Use / Intoxication / Withdrawal Exam Findings', secs);
 }
 
 </script>
