@@ -1124,14 +1124,14 @@
 <div id="panel-pocus" class="panel">
   <!-- POCUS Section -->
   <div class="section">
-    <div class="section-header" onclick="toggleSection(this)">
+    <div class="section-header open" onclick="toggleSection(this)">
       <div class="section-title">
         <div class="section-dot" id="dot-pocus"></div>
         Point of Care Ultrasound (POCUS)
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <div class="toggle" id="toggle-pocus" onclick="event.stopPropagation();togglePocus()"></div>
-        <span class="chevron" style="transform:rotate(180deg)">▼</span>
+        <div class="toggle on" id="toggle-pocus" onclick="event.stopPropagation();togglePocus()"></div>
+        <span class="chevron">▼</span>
       </div>
     </div>
     <div class="section-body open">
@@ -1139,8 +1139,8 @@
 
       <!-- Cardiac -->
       <div class="field-group">
-        <div class="field-label">Cardiac</div>
-        <select id="pocus-cardiac">
+        <div class="field-label">Cardiac (select multiple if needed)</div>
+        <select id="pocus-cardiac" multiple>
           <option value="">-- Not performed --</option>
           <option value="Normal cardiac function. No pericardial effusion. Hyperdynamic contractility. Good LV function.">Normal - good LV function, no effusion</option>
           <option value="Reduced LV function on POCUS assessment.">Reduced LV function</option>
@@ -1195,8 +1195,8 @@
 
       <!-- Lung -->
       <div class="field-group">
-        <div class="field-label">Lung (bilateral)</div>
-        <select id="pocus-lung">
+        <div class="field-label">Lung (bilateral - select multiple if needed)</div>
+        <select id="pocus-lung" multiple>
           <option value="">-- Not performed --</option>
           <option value="Bilateral lung sliding confirmed. No B-lines. No pneumothorax identified on POCUS.">Bilateral sliding present, no PTX, no B-lines</option>
           <option value="Bilateral lung sliding present. B-lines noted bilaterally consistent with pulmonary oedema.">Sliding present, B-lines bilateral (oedema)</option>
@@ -1220,8 +1220,8 @@
 
       <!-- Aorta -->
       <div class="field-group">
-        <div class="field-label">Aorta</div>
-        <select id="pocus-aorta">
+        <div class="field-label">Aorta (select multiple if needed)</div>
+        <select id="pocus-aorta" multiple>
           <option value="">-- Not performed --</option>
           <option value="Abdominal aorta visualised. No aneurysm identified on POCUS. Aortic diameter within normal limits.">No AAA, normal calibre</option>
           <option value="Abdominal aortic aneurysm identified on POCUS.">AAA identified</option>
@@ -1233,8 +1233,8 @@
 
       <!-- DVT -->
       <div class="field-group">
-        <div class="field-label">DVT (lower limb venous compression)</div>
-        <select id="pocus-dvt">
+        <div class="field-label">DVT (lower limb venous compression - select multiple if needed)</div>
+        <select id="pocus-dvt" multiple>
           <option value="">-- Not performed --</option>
           <option value="Bilateral lower limb venous compression ultrasound performed. Full compressibility of femoral and popliteal veins bilaterally. No DVT identified on POCUS.">Bilateral - no DVT</option>
           <option value="Non-compressible femoral/popliteal vein identified. DVT suspected on POCUS.">DVT identified</option>
@@ -1244,8 +1244,8 @@
 
       <!-- Bladder / Renal -->
       <div class="field-group">
-        <div class="field-label">Bladder / Renal</div>
-        <select id="pocus-renal">
+        <div class="field-label">Bladder / Renal (select multiple if needed)</div>
+        <select id="pocus-renal" multiple>
           <option value="">-- Not performed --</option>
           <option value="Bilateral kidneys visualised. No hydronephrosis. Bladder appears decompressed.">Normal - no hydronephrosis</option>
           <option value="Mild unilateral hydronephrosis identified on POCUS.">Mild hydronephrosis (unilateral)</option>
@@ -1262,7 +1262,7 @@
       <!-- Comments -->
       <div class="field-group">
         <div class="field-label">Additional POCUS comments</div>
-        <textarea id="pocus-comments" rows="3" placeholder="Free text - additional findings, other views performed, limitations..." style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text1);resize:vertical;"></textarea>
+        <textarea id="pocus-comments" rows="3" placeholder="Free text - additional findings, other views performed, limitations..." style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);resize:vertical;"></textarea>
       </div>
     </div>
   </div>
@@ -1328,8 +1328,9 @@ const ROS_SYSTEMS = {
     findings: ['cough','productive cough','haemoptysis','wheezing','stridor','pleuritic chest pain','snoring or sleep apnoea symptoms'],
     detailedFindings: {
       'shortness of breath': {
-        type: 'fields',
-        fields: ['onset','activity','duration','associated symptoms','exacerbating factors','relieving factors','position of comfort']
+        type: 'multi-dropdown',
+        label: 'Shortness of Breath Details',
+        options: ['sudden onset','gradual onset','at rest','with exertion','with minimal exertion','worse when lying flat','worse when sitting up','better when sitting up','better when lying flat','associated with chest pain','associated with cough','associated with wheezing','associated with fever','associated with palpitations','associated with dizziness','associated with nausea','associated with diaphoresis','exacerbated by cold air','exacerbated by allergens','exacerbated by exercise','exacerbated by stress','relieved by rest','relieved by sitting up','relieved by supplemental oxygen','relieved by bronchodilators','relieved by steroids','position of comfort - sitting upright','position of comfort - tripod position','position of comfort - lying on left side','position of comfort - lying on right side','position of comfort - standing','position of comfort - walking']
       }
     }
   },
@@ -1423,7 +1424,7 @@ const rosDetailState = {};  // for detailed findings: {sysKey: {finding: {field:
 let rosMode = 'focused';
 
 // Exam state
-let synthesiEnabled = false;
+let synthesisEnabled = false;
 let examDirty = false;
 
 // Complaint module exam findings state
@@ -1646,13 +1647,13 @@ function updateDot(id, state) {
 // ============================================================
 
 function toggleSynthesis() {
-  synthesiEnabled = !synthesiEnabled;
+  synthesisEnabled = !synthesisEnabled;
   const t = document.getElementById('toggle-synthesis');
-  if (synthesiEnabled) t.classList.add('on'); else t.classList.remove('on');
-  updateDot('dot-synthesis', synthesiEnabled ? 'active' : 'off');
+  if (synthesisEnabled) t.classList.add('on'); else t.classList.remove('on');
+  updateDot('dot-synthesis', synthesisEnabled ? 'active' : 'off');
 }
 
-let pocusEnabled = false;
+let pocusEnabled = true;
 
 function togglePocus() {
   pocusEnabled = !pocusEnabled;
@@ -1682,14 +1683,14 @@ const EXAM_SECTIONS = [
 const examSectionEnabled = {};
 
 function initExamSectionToggles() {
-  EXAM_SECTIONS.forEach(s => { examSectionEnabled[s.key] = true; });
+  EXAM_SECTIONS.forEach(s => { examSectionEnabled[s.key] = false; }); // Default to off
   const container = document.getElementById('exam-section-toggles');
   if (!container) return;
   let html = '';
   EXAM_SECTIONS.forEach(s => {
     html += `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);padding:8px 10px;border-radius:8px;">
       <span style="font-size:15px;">${s.label}</span>
-      <div class="toggle on" id="esec-${s.key}" onclick="toggleExamSection('${s.key}')"></div>
+      <div class="toggle" id="esec-${s.key}" onclick="toggleExamSection('${s.key}')"></div>
     </div>`;
   });
   container.innerHTML = html;
@@ -1716,7 +1717,46 @@ function loadComplaintModule() {
   const val = document.getElementById('complaint-select').value;
   const container = document.getElementById('complaint-module-container');
   container.innerHTML = '';
+  
+  // Reset all exam sections to off first
+  EXAM_SECTIONS.forEach(s => { 
+    examSectionEnabled[s.key] = false;
+    const t = document.getElementById('esec-' + s.key);
+    if (t) t.classList.remove('on');
+  });
+  
   if (val === 'none') return;
+  
+  // Define which exam sections each complaint module should enable
+  const moduleSections = {
+    chest_pain: ['general','head','heent','neck','respiratory','chest_wall','cardiac','abdomen','extremities','skin','neurological'],
+    sob: ['general','neck','respiratory','cardiac','extremities','skin'],
+    abdo_pain: ['general','heent','cardiac','abdomen','extremities','neurological'],
+    back_pain: ['general','neurological','back','extremities'],
+    syncope: ['general','heent','neck','cardiac','neurological','extremities','skin'],
+    headache: ['general','heent','neck','neurological'],
+    ams: ['general','heent','neck','cardiac','neurological','extremities','skin'],
+    trauma: ['general','head','heent','neck','respiratory','chest_wall','cardiac','abdomen','genitourinary','back','extremities','neurological','skin'],
+    stroke: ['general','heent','neck','cardiac','neurological','extremities','skin'],
+    uro: ['general','abdomen','genitourinary','back','extremities'],
+    palp: ['general','heent','neck','cardiac','extremities','skin'],
+    anaphylaxis: ['general','heent','neck','respiratory','cardiac','skin'],
+    eye: ['general','heent','neurological'],
+    neck_pain: ['general','heent','neck','neurological','extremities'],
+    dvt: ['general','cardiac','extremities','neurological'],
+    rash: ['general','skin','neurological','extremities'],
+    urti: ['general','heent','neck','respiratory','skin','neurological']
+  };
+  
+  // Enable the relevant sections for this complaint
+  if (moduleSections[val]) {
+    moduleSections[val].forEach(sectionKey => {
+      examSectionEnabled[sectionKey] = true;
+      const t = document.getElementById('esec-' + sectionKey);
+      if (t) t.classList.add('on');
+    });
+  }
+  
   const modules = {
     chest_pain: buildChestPainModule,
     sob: buildSOBModule,
@@ -1917,17 +1957,17 @@ function buildSOBModule(container) {
       {id:'sob_expansion', normal:'Chest expansion symmetric', abnormal:'Asymmetric expansion'},
       {id:'sob_perc', normal:'Percussion resonant throughout', abnormal:'Dullness to percussion at ___'},
       {id:'sob_bs', normal:'Breath sounds present and equal bilaterally', abnormal:'Decreased or absent breath sounds at ___'},
-      {id:'sob_crackles', normal:'No crackles', abnormal:'Crackles at ___'},
-      {id:'sob_wheeze', normal:'No wheeze', abnormal:'Wheeze present'},
+      {id:'sob_crackles', type:'multi-dropdown', label:'Crackles Location', options:['right upper lobe','right middle lobe','right lower lobe','left upper lobe','left lower lobe','bilateral upper lobes','bilateral lower lobes','diffuse'], normal:'No crackles', abnormal:'Crackles present'},
+      {id:'sob_wheeze', type:'multi-dropdown', label:'Wheeze Location', options:['right upper lobe','right middle lobe','right lower lobe','left upper lobe','left lower lobe','bilateral upper lobes','bilateral lower lobes','diffuse','expiratory wheeze','inspiratory wheeze'], normal:'No wheeze', abnormal:'Wheeze present'},
       {id:'sob_rhonchi', normal:'No rhonchi', abnormal:'Rhonchi present'},
       {id:'sob_stridor', normal:'No stridor', abnormal:'Stridor audible'},
-      {id:'sob_egoph', normal:'No egophony', abnormal:'Egophony present at ___'}
+      {id:'sob_egoph', type:'multi-dropdown', label:'Egophony Location', options:['right upper lobe','right middle lobe','right lower lobe','left upper lobe','left lower lobe','bilateral upper lobes','bilateral lower lobes'], normal:'No egophony', abnormal:'Egophony present'}
     ],
     cardiac: [
       {id:'sob_rhythm', normal:'Regular rate and rhythm', abnormal:'Irregular rhythm'},
       {id:'sob_s1s2', normal:'S1, S2 normal', abnormal:'Abnormal heart sounds'},
       {id:'sob_s3', normal:'No S3 or S4', abnormal:'S3 present, consistent with volume overload'},
-      {id:'sob_murmur', normal:'No murmur', abnormal:'Murmur audible'}
+      {id:'sob_murmur', type:'multi-dropdown', label:'Murmur Characteristics (select all that apply)', options:['aortic systolic ejection murmur','mitral systolic murmur','tricuspid systolic murmur','pulmonic systolic murmur','aortic diastolic murmur','mitral diastolic murmur','tricuspid diastolic murmur','pulmonic diastolic murmur','holosystolic murmur','pansystolic murmur','crescendo murmur','decrescendo murmur','crescendo-decrescendo murmur','grade I/VI','grade II/VI','grade III/VI','grade IV/VI','grade V/VI','grade VI/VI','radiates to carotids','radiates to axilla','radiates to back'], normal:'No murmur', abnormal:'Murmur audible'}
     ],
     extremities: [
       {id:'sob_edema', normal:'No peripheral oedema', abnormal:'Bilateral pitting oedema to ___'},
@@ -1961,11 +2001,25 @@ function buildSOBModule(container) {
   secs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData.sob[s.key].forEach(f => {
-      examFindings[f.id] = 'normal';
-      html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('sob','${s.key}','${f.id}',this)">
-        <div class="fi-dot"></div>
-        <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
-      </div>`;
+      if (f.type === 'dropdown' || f.type === 'multi-dropdown') {
+        examFindings[f.id] = '';
+        const selectId = `sel-${f.id}`;
+        const multi = f.type === 'multi-dropdown' ? ' multiple' : '';
+        html += `<div class="field-group" style="margin-bottom:10px;">
+          <div class="field-label">${f.label}</div>
+          <select id="${selectId}"${multi} onchange="updateExamDropdown('${f.id}','${f.label}',this)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+            <option value="">-- Select --</option>`;
+        f.options.forEach(opt => {
+          html += `<option value="${opt}">${capitalizeFirst(opt)}</option>`;
+        });
+        html += `</select></div>`;
+      } else {
+        examFindings[f.id] = 'normal';
+        html += `<div class="finding-item" id="efi-${f.id}" onclick="toggleExamFindingData('sob','${s.key}','${f.id}',this)">
+          <div class="fi-dot"></div>
+          <div class="fi-text" id="efit-${f.id}">${f.normal}</div>
+        </div>`;
+      }
     });
     html += `</div>`;
   });
@@ -2300,19 +2354,19 @@ function generateOutput() {
           notComplained.push(finding);
         }
       });
-      let line = sys.label + ': ';
       if (complained.length === 0 && notComplained.length === 0) {
-        line += 'patient does not complain of ' + listFindings(sys.findings) + '.';
-      } else {
-        const parts = [];
-        if (complained.length > 0) {
-          parts.push('patient complains of ' + listFindings(complained) + '.');
-        }
-        if (notComplained.length > 0) {
-          parts.push('Patient does not complain of ' + listFindings(notComplained) + '.');
-        }
-        line += parts.join(' ');
+        // No findings explicitly set — skip this system entirely
+        return;
       }
+      let line = sys.label + ': ';
+      const parts = [];
+      if (complained.length > 0) {
+        parts.push('patient complains of ' + listFindings(complained) + '.');
+      }
+      if (notComplained.length > 0) {
+        parts.push('Patient does not complain of ' + listFindings(notComplained) + '.');
+      }
+      line += parts.join(' ');
       systemLines.push(line);
     });
     if (systemLines.length === 0) {
@@ -2403,10 +2457,13 @@ function generateOutput() {
 
   // GENERAL
   if (examSectionEnabled['general']) {
-    output += 'General: ' + (
-      moduleSection('general') ||
-      `Patient is a ${agePrefix}${build}, ${appear} ${age} ${sex}, who is alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.`
-    ) + '\n';
+    const patientDesc = `Patient is a ${agePrefix}${build}, ${appear} ${age} ${sex}.`;
+    const genModText = moduleSection('general');
+    if (genModText) {
+      output += `General: ${patientDesc} ${genModText}\n`;
+    } else {
+      output += `General: ${patientDesc} Alert, oriented, in no acute distress, breathing comfortably, and engaging appropriately with staff.\n`;
+    }
   }
 
   // HEAD
@@ -2575,8 +2632,25 @@ function generateOutput() {
 
   // SKIN
   if (examSectionEnabled['skin']) {
-    const skinText = moduleSection('skin');
-    output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
+    if (complaint === 'rash') {
+      const distText = moduleSection('distribution');
+      const morphText = moduleSection('morphology');
+      const charText = moduleSection('characteristics');
+      const rashParts = [distText, morphText, charText].filter(Boolean);
+      const rashSkinText = rashParts.join(' ');
+      output += 'Skin: ' + (rashSkinText || 'No rash identified on examination. Skin intact, appropriate in colour, no visible lesions.') + '\n';
+      const mucousText = moduleSection('mucous');
+      if (mucousText) output += 'Mucous Membranes: ' + mucousText + '\n';
+      const lymphRashText = moduleSection('lymph');
+      if (lymphRashText) output += 'Lymph Nodes: ' + lymphRashText + '\n';
+      const assocText = moduleSection('associated');
+      if (assocText) output += 'Associated Findings: ' + assocText + '\n';
+      const infectText = moduleSection('infection');
+      if (infectText) output += 'Infection / Sepsis Screen: ' + infectText + '\n';
+    } else {
+      const skinText = moduleSection('skin');
+      output += 'Skin: ' + (skinText || 'Intact, appropriate in colour, no visible rash, wounds, or lesions.') + '\n';
+    }
   }
 
   // MODULE-SPECIFIC ADDITIONAL SECTIONS
@@ -2616,7 +2690,19 @@ function generateOutput() {
     const pocusLines = [];
     pocusViews.forEach(v => {
       const el = document.getElementById(v.id);
-      if (el && el.value) pocusLines.push(v.label + ': ' + el.value);
+      if (el) {
+        // Handle both single-select and multi-select
+        if (el.multiple) {
+          // Multi-select: collect all selected values
+          const selected = Array.from(el.selectedOptions).map(opt => opt.value).filter(val => val);
+          if (selected.length > 0) {
+            pocusLines.push(v.label + ': ' + selected.join('. '));
+          }
+        } else {
+          // Single-select
+          if (el.value) pocusLines.push(v.label + ': ' + el.value);
+        }
+      }
     });
     const pocusComments = document.getElementById('pocus-comments');
     const pocusExtra = pocusComments ? pocusComments.value.trim() : '';
@@ -2629,7 +2715,7 @@ function generateOutput() {
   }
 
   // Synthesis
-  if (synthesiEnabled) {
+  if (synthesisEnabled) {
     output += '\n' + getSynthesisText(complaint) + '\n';
   }
 
@@ -2638,9 +2724,6 @@ function generateOutput() {
 
   document.getElementById('output-area').textContent = output.trim();
   showTab('output');
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    if(i===2) t.classList.add('active'); else t.classList.remove('active');
-  });
 }
 
 function getComplaintLabel(key) {
@@ -2852,17 +2935,29 @@ function resetAll() {
   document.getElementById('complaint-select').value = 'none';
   document.getElementById('complaint-module-container').innerHTML = '';
   Object.keys(examFindings).forEach(k => { examFindings[k] = 'normal'; });
-  synthesiEnabled = false;
+  synthesisEnabled = false;
   document.getElementById('toggle-synthesis').classList.remove('on');
   pocusEnabled = false;
   const pt = document.getElementById('toggle-pocus');
   if (pt) pt.classList.remove('on');
   updateDot('dot-pocus', 'off');
-  // Reset exam section toggles to all-on
+  
+  // Reset POCUS fields
+  document.getElementById('pocus-cardiac').value = '';
+  document.getElementById('pocus-fast-ruq').value = '';
+  document.getElementById('pocus-fast-luq').value = '';
+  document.getElementById('pocus-fast-pelvis').value = '';
+  document.getElementById('pocus-lung').value = '';
+  document.getElementById('pocus-aorta').value = '';
+  document.getElementById('pocus-dvt').value = '';
+  document.getElementById('pocus-renal').value = '';
+  document.getElementById('pocus-comments').value = '';
+  
+  // Reset exam section toggles to all-off (default state)
   EXAM_SECTIONS.forEach(s => {
-    examSectionEnabled[s.key] = true;
+    examSectionEnabled[s.key] = false;
     const t = document.getElementById('esec-' + s.key);
-    if (t) t.classList.add('on');
+    if (t) t.classList.remove('on');
   });
 
   // Reset output
@@ -2904,7 +2999,7 @@ function buildModuleHTML(moduleKey, title, sectionDefs) {
         html += `</select></div>`;
       } else if (f.type === 'wells-calculator') {
         // Wells DVT calculator
-        examFindings[f.id] = '';
+        examFindings[f.id] = 'Wells score for DVT: 0 (Low probability (DVT unlikely)). No positive criteria.';
         html += `<div class="field-group" style="margin-bottom:10px;">
           <div class="field-label" onclick="toggleCalculator('calc-${f.id}')" style="cursor:pointer;user-select:none;">${f.label} <span style="font-size:12px;color:var(--text3);">(click to expand)</span></div>
           <div id="calc-${f.id}" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border-radius:6px;">
@@ -2923,7 +3018,7 @@ function buildModuleHTML(moduleKey, title, sectionDefs) {
         </div>`;
       } else if (f.type === 'perc-calculator') {
         // PERC calculator
-        examFindings[f.id] = '';
+        examFindings[f.id] = 'PERC score: 0/8 (PERC negative, PE can be excluded). No positive criteria.';
         html += `<div class="field-group" style="margin-bottom:10px;">
           <div class="field-label" onclick="toggleCalculator('calc-${f.id}')" style="cursor:pointer;user-select:none;">${f.label} <span style="font-size:12px;color:var(--text3);">(click to expand)</span></div>
           <div id="calc-${f.id}" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border-radius:6px;">
@@ -3216,7 +3311,7 @@ function updateMechSubfields() {
       f.options.forEach(o => { html += `<option value="${o}">${o}</option>`; });
       html += `</select>`;
     } else {
-      html += `<input type="text" id="${f.id}" placeholder="${f.placeholder || ''}" style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text1);">`;
+      html += `<input type="text" id="${f.id}" placeholder="${f.placeholder || ''}" style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);">`;
     }
     html += `</div>`;
   });
@@ -3821,8 +3916,8 @@ function buildURTIModule(container) {
       {id:'urti_ears', normal:'Tympanic membranes intact bilaterally, no erythema or effusion', abnormal:'TM erythema, bulging, or effusion on ___, otitis media present'}
     ],
     neck: [
-      {id:'urti_nodes', normal:'Mild anterior cervical lymphadenopathy, mobile and non-tender', abnormal:'Tender or enlarged lymph nodes, ___ (location)'},
-      {id:'urti_meningism', normal:'No meningismus or neck stiffness', abnormal:'Meningismus present, meningitis excluded?'}
+      {id:'urti_nodes', type:'multi-dropdown', label:'Lymph Node Findings', options:['anterior cervical','posterior cervical','supraclavicular','submandibular','generalized'], normal:'Mild anterior cervical lymphadenopathy, mobile and non-tender', abnormal:'Tender or enlarged lymph nodes'},
+      {id:'urti_meningism', type:'dropdown', label:'Meningismus Assessment', options:['absent','present - meningitis excluded','present - meningitis unlikely','present - less likely','present - possible'], normal:'No meningismus or neck stiffness', abnormal:'Meningismus assessment documented'}
     ],
     resp: [
       {id:'urti_wob', normal:'Work of breathing normal, no respiratory distress', abnormal:'Increased work of breathing or respiratory distress'},
@@ -3831,7 +3926,8 @@ function buildURTIModule(container) {
       {id:'urti_sats', normal:'Oxygen saturations normal on room air', abnormal:'Hypoxia present, oxygen required'}
     ],
     skin: [
-      {id:'urti_rash', normal:'No rash or skin eruption', abnormal:'Rash present: ___ (describe distribution and morphology)'}
+      {id:'urti_rash_present', normal:'No rash or skin eruption', abnormal:'Rash present'},
+      {id:'urti_rash_desc', type:'multi-dropdown', label:'Rash Descriptors', options:['macular','papular','macropapular','vesicular','pustular','petechial','purpuric','urticarial','confluent','localized','widespread','face','trunk','extremities','palms/soles','blanching','non-blanching'], normal:'', abnormal:''}
     ],
     systemic: [
       {id:'urti_myalgia', normal:'No significant myalgia or body aches', abnormal:'Generalised myalgia and body aches reported'},
