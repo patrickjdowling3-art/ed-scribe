@@ -577,6 +577,31 @@
     font-weight: 500;
   }
 
+  .chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 6px;
+  }
+  .chip {
+    display: inline-block;
+    padding: 6px 13px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .chip.selected {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+  }
+
   .ms-placeholder {
     font-size: 13px;
     color: var(--text3);
@@ -2230,6 +2255,13 @@ function toggleExamFindingData(module, section, id, el) {
   }
 }
 
+function toggleChip(el, id, label) {
+  el.classList.toggle('selected');
+  const list = document.getElementById('cbl-' + id);
+  const selected = list ? Array.from(list.querySelectorAll('.chip.selected')).map(c => c.dataset.value) : [];
+  examFindings[id] = selected.length > 0 ? label + ': ' + selected.join(', ') : '';
+}
+
 function updateExamDropdown(id, label, selectEl) {
   if (selectEl.multiple) {
     // Multi-select: get all selected options
@@ -2997,7 +3029,18 @@ function buildModuleHTML(moduleKey, title, sectionDefs) {
   sectionDefs.forEach(s => {
     html += `<div class="exam-findings-sub"><div class="sub-label">${s.title}</div>`;
     window.examData[moduleKey][s.key].forEach(f => {
-      if (f.type === 'dropdown' || f.type === 'multi-dropdown') {
+      if (f.type === 'chip-list') {
+        // Tap-to-toggle chip multi-select
+        examFindings[f.id] = '';
+        html += `<div class="field-group" style="margin-bottom:10px;">
+          <div class="field-label">${f.label}</div>
+          <div class="chip-list" id="cbl-${f.id}">`;
+        f.options.forEach(opt => {
+          const safe = opt.replace(/'/g, "\\'");
+          html += `<div class="chip" data-value="${opt}" onclick="toggleChip(this,'${f.id}','${f.label}')">${capitalizeFirst(opt)}</div>`;
+        });
+        html += `</div></div>`;
+      } else if (f.type === 'dropdown' || f.type === 'multi-dropdown') {
         // Dropdown field
         examFindings[f.id] = '';
         const selectId = `sel-${f.id}`;
@@ -4040,8 +4083,8 @@ function generateNVDOutput(examFindings) {
 }
 
 function generateJointPainOutput(examFindings) {
-  const jpJointsEl = document.getElementById('sel-jp_joints');
-  const jpJoints   = jpJointsEl ? Array.from(jpJointsEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const jpJointsEl = document.getElementById('cbl-jp_joints');
+  const jpJoints   = jpJointsEl ? Array.from(jpJointsEl.querySelectorAll('.chip.selected')).map(c=>c.dataset.value) : [];
   const jpDist     = document.getElementById('sel-jp_distribution')?.value || '';
   const parts      = [];
 
@@ -4109,8 +4152,8 @@ function generateJointPainOutput(examFindings) {
 }
 
 function generateSubstanceOutput(examFindings) {
-  const subTypeEl   = document.getElementById('sel-sub_type');
-  const subTypes    = subTypeEl ? Array.from(subTypeEl.selectedOptions).map(o=>o.value).filter(Boolean) : [];
+  const subTypeEl   = document.getElementById('cbl-sub_type');
+  const subTypes    = subTypeEl ? Array.from(subTypeEl.querySelectorAll('.chip.selected')).map(c=>c.dataset.value) : [];
   const subSyndrome = document.getElementById('sel-sub_syndrome')?.value   || '';
   const subConsc    = document.getElementById('sel-sub_consciousness')?.value || '';
   const subHR       = document.getElementById('sel-sub_hr_state')?.value   || '';
@@ -4377,7 +4420,7 @@ function buildJointPainModule(container) {
       {id:'jp_vitals', normal:'Vital signs stable, afebrile',            abnormal:'Febrile or haemodynamically unstable (septic arthritis excluded?)'}
     ],
     joint_selection: [
-      {id:'jp_joints', type:'multi-dropdown', label:'Affected joint(s)', options:[
+      {id:'jp_joints', type:'chip-list', label:'Affected joint(s)', options:[
         'shoulder (right)','shoulder (left)','elbow (right)','elbow (left)',
         'wrist (right)','wrist (left)',
         'metacarpophalangeal joints (right)','metacarpophalangeal joints (left)',
@@ -4449,7 +4492,7 @@ function buildSubstanceModule(container) {
       {id:'sub_distress',normal:'Cooperative with assessment',                    abnormal:'Agitated, combative, or uncooperative with assessment'}
     ],
     substances: [
-      {id:'sub_type', type:'multi-dropdown', label:'Substance(s) involved (suspected or confirmed)', options:[
+      {id:'sub_type', type:'chip-list', label:'Substance(s) involved (suspected or confirmed)', options:[
         'alcohol (ethanol)','cannabis / THC',
         'opioids (heroin / fentanyl / oxycodone / morphine)',
         'cocaine','methamphetamine / amphetamines','benzodiazepines',
