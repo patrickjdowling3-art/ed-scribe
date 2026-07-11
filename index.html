@@ -1317,7 +1317,7 @@ const ROS_SYSTEMS = {
   },
   eyes: {
     label: 'Eyes',
-    findings: ['visual changes','blurred vision','eye pain','photophobia','eye discharge','eye redness','floaters or flashes'],
+    findings: ['visual changes','blurred vision','eye pain','photophobia','eye discharge','eye redness','floaters or flashes','icteric sclera or yellowing of whites of eyes'],
     detailedFindings: {
       'double vision': {
         type: 'select',
@@ -1335,11 +1335,19 @@ const ROS_SYSTEMS = {
   },
   cardiovascular: {
     label: 'Cardiovascular',
-    findings: ['palpitations','syncope or near-syncope','exertional dyspnea','orthopnoea','paroxysmal nocturnal dyspnoea','leg swelling or oedema','claudication'],
+    findings: ['palpitations','syncope or near-syncope','exertional dyspnea','orthopnoea','paroxysmal nocturnal dyspnoea','claudication'],
     detailedFindings: {
       'chest pain': {
-        type: 'fields',
-        fields: ['nature','onset','duration','provoking factors','relieving factors','radiation']
+        type: 'mixed',
+        fields: [
+          {name: 'location', type: 'select', options: ['substernal','retrosternal','left-sided','right-sided','left chest wall','right chest wall','anterior chest','lateral chest','epigastric','diffuse across chest']},
+          {name: 'nature', type: 'chips', options: ['sharp','dull','crushing','pressure-like','burning','stabbing','tearing','aching','tightness','colicky']},
+          {name: 'onset', type: 'select', options: ['sudden','gradual','exertional','at rest','pleuritic (worse with breathing)','positional']},
+          {name: 'radiation', type: 'select', options: ['none','to left arm','to right arm','to both arms','to jaw','to neck','to back','to shoulder','to epigastrium']},
+          {name: 'duration', type: 'text'},
+          {name: 'provoking factors', type: 'text'},
+          {name: 'relieving factors', type: 'text'}
+        ]
       },
       'chest tightness or pressure': {
         type: 'fields',
@@ -1348,6 +1356,13 @@ const ROS_SYSTEMS = {
       'exertional chest pain': {
         type: 'fields',
         fields: ['nature','onset','duration','relieving factors']
+      },
+      'leg swelling or oedema': {
+        type: 'mixed',
+        fields: [
+          {name: 'laterality', type: 'chips', options: ['right','left','bilateral']},
+          {name: 'distribution', type: 'chips', options: ['whole leg','calf','ankle','foot']}
+        ]
       }
     }
   },
@@ -1364,12 +1379,59 @@ const ROS_SYSTEMS = {
   },
   gi: {
     label: 'Gastrointestinal',
-    findings: ['nausea','vomiting','haematemesis','diarrhoea','constipation','abdominal pain','abdominal bloating','dysphagia','heartburn or reflux','rectal bleeding','melaena','jaundice','change in bowel habit','loss of appetite']
+    order: ['abdominal pain','nausea','vomiting','diarrhoea','constipation','abdominal bloating','dysphagia','heartburn or reflux','rectal bleeding','change in bowel habit','loss of appetite'],
+    findings: ['nausea','constipation','abdominal bloating','dysphagia','heartburn or reflux','loss of appetite'],
+    detailedFindings: {
+      'abdominal pain': {
+        type: 'mixed',
+        fields: [
+          {name: 'location', type: 'select', options: ['epigastric','right upper quadrant','left upper quadrant','periumbilical','right lower quadrant','left lower quadrant','suprapubic','diffuse','diffuse worst in epigastric','diffuse worst in RLQ','diffuse worst in LLQ']},
+          {name: 'nature', type: 'chips', options: ['sharp','dull','crampy','colicky','burning','pressure-like','constant','intermittent']},
+          {name: 'onset', type: 'select', options: ['sudden','gradual','post-prandial']},
+          {name: 'radiation', type: 'select', options: ['none','to back','to right shoulder','to groin','to flank','to chest','diffuse']},
+          {name: 'provoking factors', type: 'text'},
+          {name: 'relieving factors', type: 'text'}
+        ]
+      },
+      'vomiting': {
+        type: 'mixed',
+        fields: [
+          {name: 'character of vomitus', type: 'chips', options: ['clear','yellow','brown','bright red streaks','bright red clots','coffee ground']}
+        ]
+      },
+      'diarrhoea': {
+        type: 'mixed',
+        fields: [
+          {name: 'frequency', type: 'text'},
+          {name: 'colour', type: 'select', options: ['clear','yellow','brown','bright red','melaena']}
+        ]
+      },
+      'rectal bleeding': {
+        type: 'select',
+        options: ['bright red blood per rectum - streaks','bright red blood per rectum - clots','melaena']
+      },
+      'change in bowel habit': {
+        type: 'select',
+        options: ['frequency increased','frequency decreased','other']
+      }
+    }
   },
   gu: {
     label: 'Genitourinary',
-    findings: ['dysuria','haematuria','urinary frequency','urinary urgency','urinary incontinence','flank pain','suprapubic pain','nocturia','difficulty voiding','urethral discharge'],
+    findings: ['dysuria','haematuria','urinary frequency','urinary urgency','urinary incontinence','suprapubic pain','nocturia','difficulty voiding'],
     detailedFindings: {
+      'flank pain': {
+        type: 'mixed',
+        fields: [
+          {name: 'laterality', type: 'select', options: ['right','left','bilateral']},
+          {name: 'nature', type: 'select', options: ['sharp','dull','colicky','constant','intermittent','pressure-like']},
+          {name: 'radiation', type: 'select', options: ['none','to groin','to testicle or labia','to abdomen','to back']}
+        ]
+      },
+      'urethral discharge': {
+        type: 'select',
+        options: ['clear','white','yellow','green','purulent','bloody','brown']
+      },
       'vaginal discharge': {
         type: 'select',
         options: ['clear','white','purulent','brown']
@@ -1421,7 +1483,13 @@ const ROS_SYSTEMS = {
   },
   skin: {
     label: 'Skin / Integumentary',
-    findings: ['rash','urticaria or hives','pruritus or itching','skin lesions','bruising or ecchymoses','wound or laceration','alopecia or hair loss','skin colour change','nail changes','jaundice or icterus']
+    findings: ['rash','urticaria or hives','pruritus or itching','skin lesions','bruising or ecchymoses','wound or laceration','alopecia or hair loss','nail changes','jaundice or icterus'],
+    detailedFindings: {
+      'skin colour change': {
+        type: 'select',
+        options: ['pallor','cyanosis','jaundice','other']
+      }
+    }
   },
   neuro: {
     label: 'Neurological',
@@ -1437,7 +1505,16 @@ const ROS_SYSTEMS = {
   },
   heme: {
     label: 'Hematologic / Lymphatic',
-    findings: ['easy bruising','unusual bleeding','prolonged bleeding from wounds','lymph node swelling','fatigue or pallor','petechiae or purpura','recurrent infections','blood clot history','night sweats']
+    findings: ['easy bruising','unusual bleeding','prolonged bleeding from wounds','fatigue or pallor','petechiae or purpura','recurrent infections','blood clot history','night sweats'],
+    detailedFindings: {
+      'lymph node swelling': {
+        type: 'mixed',
+        fields: [
+          {name: 'sites', type: 'chips', options: ['anterior cervical','posterior cervical','submandibular','supraclavicular','axillary','inguinal','generalized']},
+          {name: 'laterality', type: 'select', options: ['right','left','bilateral']}
+        ]
+      }
+    }
   },
   allergy: {
     label: 'Allergic / Immunologic',
@@ -1552,28 +1629,30 @@ function buildSystemBody(sysKey) {
   if (!body) return;
   const sys = ROS_SYSTEMS[sysKey];
   let html = '<div style="font-size:16px;color:var(--text3);margin-bottom:8px;">Tap finding to cycle: neutral → does not complain of → complains of/admits to</div>';
-  
-  // Render simple findings
-  sys.findings.forEach(f => {
-    html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">
-      <div class="finding-status" id="status-${sysKey}-${f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'')}">–</div>
+
+  // Render findings in explicit order if provided, else simple findings followed by detailed findings
+  const order = sys.order || [...sys.findings, ...(sys.detailedFindings ? Object.keys(sys.detailedFindings) : [])];
+
+  order.forEach(f => {
+    const detail = sys.detailedFindings && sys.detailedFindings[f];
+    const fid = f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'');
+
+    if (!detail) {
+      html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${fid}">
+      <div class="finding-status" id="status-${sysKey}-${fid}">–</div>
       <div>
         <div class="finding-text">${capitalizeFirst(f)}</div>
       </div>
     </div>`;
-  });
-  
-  // Render detailed findings
-  if (sys.detailedFindings) {
-    Object.keys(sys.detailedFindings).forEach(f => {
-      const detail = sys.detailedFindings[f];
-      const fid = f.replace(/\s+/g,'-').replace(/[^a-z0-9-]/gi,'');
-      html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${fid}">
+      return;
+    }
+
+    html += `<div class="finding-row" onclick="cycleRosFinding('${sysKey}','${f.replace(/'/g,"\\'")}',this)" id="row-${sysKey}-${fid}">
         <div class="finding-status" id="status-${sysKey}-${fid}">–</div>
         <div style="flex:1;">
           <div class="finding-text">${capitalizeFirst(f)}</div>
           <div id="detail-${sysKey}-${fid}" onclick="event.stopPropagation()" style="display:none;margin-top:6px;padding:8px;background:var(--surface2);border-radius:6px;">`;
-      
+
       if (detail.type === 'select') {
         html += `<select id="detailsel-${sysKey}-${fid}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','select',this.value)" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
           <option value="">-- Select --</option>`;
@@ -1599,6 +1678,13 @@ function buildSystemBody(sysKey) {
             html += `</select>`;
           } else if (fieldDef.type === 'text') {
             html += `<input type="text" id="detailfld-${sysKey}-${fid}-${fieldName}" onchange="updateRosDetail('${sysKey}','${f.replace(/'/g,"\\'")}','${fieldName}',this.value)" placeholder="Enter ${fieldName}" style="width:100%;padding:6px;font-size:15px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);">`;
+          } else if (fieldDef.type === 'chips') {
+            const chipsId = `rosdet-${sysKey}-${fid}-${fieldName.replace(/\s+/g,'-')}`;
+            html += `<div class="chip-list" id="${chipsId}">`;
+            fieldDef.options.forEach(opt => {
+              html += `<div class="chip" data-value="${opt}" onclick="toggleRosChip(this,'${sysKey}','${f.replace(/'/g,"\\'")}','${fieldName}','${chipsId}')">${capitalizeFirst(opt)}</div>`;
+            });
+            html += `</div>`;
           }
           html += `</div>`;
         });
@@ -1607,9 +1693,8 @@ function buildSystemBody(sysKey) {
       html += `  </div>
         </div>
       </div>`;
-    });
-  }
-  
+  });
+
   body.innerHTML = html;
 }
 
@@ -1648,6 +1733,13 @@ function cycleRosFinding(sysKey, finding, rowEl) {
 function updateRosDetail(sysKey, finding, field, value) {
   if (!rosDetailState[sysKey][finding]) rosDetailState[sysKey][finding] = {};
   rosDetailState[sysKey][finding][field] = value;
+}
+
+function toggleRosChip(el, sysKey, finding, fieldName, listId) {
+  el.classList.toggle('selected');
+  const list = document.getElementById(listId);
+  const selected = list ? Array.from(list.querySelectorAll('.chip.selected')).map(c => c.dataset.value) : [];
+  updateRosDetail(sysKey, finding, fieldName, selected.join(', '));
 }
 
 function updateSystemDot(sysKey) {
