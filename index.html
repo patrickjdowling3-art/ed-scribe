@@ -2494,10 +2494,10 @@ function generateOutput() {
       let line = sys.label + ': ';
       const parts = [];
       if (complained.length > 0) {
-        parts.push('patient complains of ' + listFindings(complained) + '.');
+        parts.push('patient complains of ' + joinAnd(complained) + '.');
       }
       if (notComplained.length > 0) {
-        parts.push('Patient does not complain of ' + listFindings(notComplained) + '.');
+        parts.push('Patient does not complain of ' + joinAnd(notComplained) + '.');
       }
       line += parts.join(' ');
       systemLines.push(line);
