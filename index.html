@@ -1168,7 +1168,7 @@
       <!-- Cardiac -->
       <div class="field-group">
         <div class="field-label">Cardiac (select multiple if needed)</div>
-        <select id="pocus-cardiac" multiple>
+        <select id="pocus-cardiac" multiple onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="Normal cardiac function. No pericardial effusion. Hyperdynamic contractility. Good LV function.">Normal - good LV function, no effusion</option>
           <option value="Reduced LV function on POCUS assessment.">Reduced LV function</option>
@@ -1191,7 +1191,7 @@
       <!-- FAST - RUQ -->
       <div class="field-group">
         <div class="field-label">FAST - RUQ (Morison's Pouch)</div>
-        <select id="pocus-fast-ruq">
+        <select id="pocus-fast-ruq" onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="No free fluid in Morison's pouch.">No free fluid</option>
           <option value="Free fluid identified in Morison's pouch.">Free fluid present</option>
@@ -1202,7 +1202,7 @@
       <!-- FAST - LUQ -->
       <div class="field-group">
         <div class="field-label">FAST - LUQ (Splenorenal)</div>
-        <select id="pocus-fast-luq">
+        <select id="pocus-fast-luq" onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="No free fluid in splenorenal space.">No free fluid</option>
           <option value="Free fluid identified in splenorenal space.">Free fluid present</option>
@@ -1213,7 +1213,7 @@
       <!-- FAST - Pelvis -->
       <div class="field-group">
         <div class="field-label">FAST - Pelvis (Pouch of Douglas / Retzius)</div>
-        <select id="pocus-fast-pelvis">
+        <select id="pocus-fast-pelvis" onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="No free fluid in the pelvis.">No free fluid</option>
           <option value="Free fluid identified in the pelvis.">Free fluid present</option>
@@ -1224,7 +1224,7 @@
       <!-- Lung -->
       <div class="field-group">
         <div class="field-label">Lung (bilateral - select multiple if needed)</div>
-        <select id="pocus-lung" multiple>
+        <select id="pocus-lung" multiple onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="Bilateral lung sliding confirmed. No B-lines. No pneumothorax identified on POCUS.">Bilateral sliding present, no PTX, no B-lines</option>
           <option value="Bilateral lung sliding present. B-lines noted bilaterally consistent with pulmonary oedema.">Sliding present, B-lines bilateral (oedema)</option>
@@ -1249,7 +1249,7 @@
       <!-- Aorta -->
       <div class="field-group">
         <div class="field-label">Aorta (select multiple if needed)</div>
-        <select id="pocus-aorta" multiple>
+        <select id="pocus-aorta" multiple onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="Abdominal aorta visualised. No aneurysm identified on POCUS. Aortic diameter within normal limits.">No AAA, normal calibre</option>
           <option value="Abdominal aortic aneurysm identified on POCUS.">AAA identified</option>
@@ -1262,7 +1262,7 @@
       <!-- DVT -->
       <div class="field-group">
         <div class="field-label">DVT (lower limb venous compression - select multiple if needed)</div>
-        <select id="pocus-dvt" multiple>
+        <select id="pocus-dvt" multiple onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="Bilateral lower limb venous compression ultrasound performed. Full compressibility of femoral and popliteal veins bilaterally. No DVT identified on POCUS.">Bilateral - no DVT</option>
           <option value="Non-compressible femoral/popliteal vein identified. DVT suspected on POCUS.">DVT identified</option>
@@ -1273,7 +1273,7 @@
       <!-- Bladder / Renal -->
       <div class="field-group">
         <div class="field-label">Bladder / Renal (select multiple if needed)</div>
-        <select id="pocus-renal" multiple>
+        <select id="pocus-renal" multiple onchange="checkPocusAutoEnable()">
           <option value="">-- Not performed --</option>
           <option value="Bilateral kidneys visualised. No hydronephrosis. Bladder appears decompressed.">Normal - no hydronephrosis</option>
           <option value="Mild unilateral hydronephrosis identified on POCUS.">Mild hydronephrosis (unilateral)</option>
@@ -1290,7 +1290,7 @@
       <!-- Comments -->
       <div class="field-group">
         <div class="field-label">Additional POCUS comments</div>
-        <textarea id="pocus-comments" rows="3" placeholder="Free text - additional findings, other views performed, limitations..." style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);resize:vertical;"></textarea>
+        <textarea id="pocus-comments" rows="3" oninput="checkPocusAutoEnable()" placeholder="Free text - additional findings, other views performed, limitations..." style="width:100%;padding:8px;font-size:16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);resize:vertical;"></textarea>
       </div>
     </div>
   </div>
@@ -1780,6 +1780,20 @@ function togglePocus() {
   const t = document.getElementById('toggle-pocus');
   if (pocusEnabled) t.classList.add('on'); else t.classList.remove('on');
   updateDot('dot-pocus', pocusEnabled ? 'active' : 'off');
+}
+
+function checkPocusAutoEnable() {
+  if (pocusEnabled) return;
+  const ids = ['pocus-cardiac','pocus-fast-ruq','pocus-fast-luq','pocus-fast-pelvis','pocus-lung','pocus-aorta','pocus-dvt','pocus-renal'];
+  const hasSelection = ids.some(id => {
+    const el = document.getElementById(id);
+    if (!el) return false;
+    return el.multiple
+      ? Array.from(el.selectedOptions).some(o => o.value !== '')
+      : el.value !== '';
+  });
+  const comments = document.getElementById('pocus-comments');
+  if (hasSelection || (comments && comments.value.trim())) togglePocus();
 }
 
 // Exam section done/not-done tracking
